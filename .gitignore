@@ -1,0 +1,15 @@
+# Local environment variables
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite Database
+db/outreach.db
+
+# VS Code / IDE settings
+.vscode/
+.idea/

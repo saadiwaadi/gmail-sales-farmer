@@ -1,0 +1,5 @@
+[
+  "Subject: database sync issues\n\nHey Sarah,\n\nSaw you guys are scaling the analytics team. \n\nWe helped Apex auto-resolve database sync lag. Took about 3 days to setup.\n\nOpen to a brief call this week?\n\nBest,\nAlex",
+  "Subject: pipeline bottlenecks\n\nHey David,\n\nRead your article on data pipeline bottlenecks. Great points on processing queue limits.\n\nWe built a lightweight queue manager that handles 10x throughput without increasing server costs.\n\nLet me know if you want to take a look.\n\nCheers,\nAlex",
+  "Subject: API response times\n\nHey Elena,\n\nI was testing your public API and noticed responses sometimes take 2+ seconds on bulk endpoints.\n\nWe optimize database query patterns for fast bulk actions. We did this for client X and got responses down to 200ms.\n\nLet me know if this is a priority right now.\n\nBest,\nAlex"
+]

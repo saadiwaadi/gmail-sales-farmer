@@ -1,0 +1,8 @@
+Vertex Tech - Hiring Post:
+We are looking for a Senior Infrastructure/DevOps Engineer to join our growing team. Currently, we are struggling with build stability. Our CI/CD builds take 45+ minutes on GitHub Actions and fail randomly. We need someone who can fix this.
+Company About:
+At Vertex Tech, we provide lightning-fast API integrations for logistics companies. We were founded in 2023 by Jane Doe. Jane is VP of Engineering. We build simple, robust tech. We write our engineering blogs in a very direct, technical, and slightly blunt manner—no fluff, just code snippets and performance metrics.
+Google Review:
+"The API integration works perfectly and is super fast, but it took us almost 3 weeks because their developer docs are extremely sparse. Rating: 4.2/5"
+Signal:
+Jane recently tweeted: "Just opened our second engineering office in Chicago! Seeking local talent."
