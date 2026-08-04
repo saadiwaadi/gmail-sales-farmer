@@ -44,3 +44,11 @@ CREATE TABLE IF NOT EXISTS llm_logs (
   execution_time_ms INTEGER,
   status TEXT             -- 'success' | 'failure'
 );
+
+CREATE TABLE IF NOT EXISTS prompt_cache (
+  prompt_hash TEXT PRIMARY KEY,
+  model TEXT,
+  response TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+

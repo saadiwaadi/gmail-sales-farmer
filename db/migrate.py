@@ -57,6 +57,16 @@ def run_migration():
     );
     """)
 
+    # Ensure prompt_cache table exists
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS prompt_cache (
+      prompt_hash TEXT PRIMARY KEY,
+      model TEXT,
+      response TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     conn.close()
     print("Database migrations applied successfully.")
