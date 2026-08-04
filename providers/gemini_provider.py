@@ -11,7 +11,7 @@ class GeminiProvider(BaseProvider):
             raise ValueError("GEMINI_API_KEY environment variable is not set.")
         # Instantiate the official Google GenAI client
         self.client = genai.Client(api_key=self.api_key)
-        self.model_name = "gemini-3.5-flash"
+        self.model_name = "gemini-3.5-flash-lite"
 
     def generate(self, prompt: str, json_mode: bool = False) -> str:
         start_time = time.perf_counter()

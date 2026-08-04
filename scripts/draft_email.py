@@ -56,17 +56,32 @@ def run_draft(client_id, tone):
     strategy = get_strategy(snapshot["extracted_profile"])
     print(f"Using Strategy: '{strategy}'")
 
-    # Validate tone input
-    valid_tones = ["direct", "warm", "curious", "blunt"]
-    if tone not in valid_tones:
-        print(f"Error: Tone '{tone}' is not valid. Must be one of {valid_tones}.")
+    # Validate tone file availability
+    db_path, emails_path = get_paths()
+    project_dir = os.path.dirname(os.path.dirname(db_path))
+    tones_dir = os.path.join(project_dir, "skills", "writing", "tones")
+    
+    available_tones = []
+    if os.path.exists(tones_dir):
+        for filename in os.listdir(tones_dir):
+            if filename.endswith(".md"):
+                available_tones.append(filename[:-3])
+
+    if tone not in available_tones:
+        print(f"Error: Tone file for '{tone}' does not exist.")
+        print(f"Available tones under skills/writing/tones/: {', '.join(sorted(available_tones))}")
         sys.exit(1)
 
     print(f"Drafting email for client '{snapshot['name']}' ({snapshot['company']}) using tone '{tone}'...")
 
     try:
-        # 4. Load writing skill
-        skill_template = load_skill("writing/outreach.md", tone=tone)
+        # 4. Load writing skill base and tone instructions
+        outreach_template = load_skill("writing/outreach.md", tone=tone)
+        tone_file_path = os.path.join(tones_dir, f"{tone}.md")
+        with open(tone_file_path, "r", encoding="utf-8") as f:
+            tone_template = f.read()
+            
+        skill_template = outreach_template + "\n\n" + tone_template
 
         # 5. Build prompt using centralized Prompt Builder
         # Include current task variables and strategy details
@@ -79,7 +94,8 @@ def run_draft(client_id, tone):
             strategy=strategy,
             client_name=snapshot["name"],
             company_name=snapshot["company"],
-            role=snapshot["role"]
+            role=snapshot["role"],
+            extracted_profile=snapshot["extracted_profile"]
         )
 
         # 6. Call active LLM provider
@@ -144,7 +160,7 @@ def run_draft(client_id, tone):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Draft an email for a client.")
     parser.add_argument("client_id", type=int, help="The client ID")
-    parser.add_argument("--tone", choices=["direct", "warm", "curious", "blunt"], default="direct", help="Requested email tone")
+    parser.add_argument("--tone", default="direct", help="Requested email tone")
     
     args = parser.parse_args()
     run_draft(args.client_id, args.tone)
