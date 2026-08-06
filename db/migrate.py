@@ -31,6 +31,10 @@ def run_migration():
     columns = [col[1] for col in cursor.fetchall()]
 
     new_columns = {
+        "role": "TEXT",
+        "company": "TEXT",
+        "industry": "TEXT",
+        "raw_dump": "TEXT",
         "normalized_research": "TEXT",
         "structured_memory": "TEXT",
         "context_cache": "TEXT",

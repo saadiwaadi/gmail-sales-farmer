@@ -1,22 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
-export default function ProfileSource({ contact, onInspectSource }) {
+export default function ProfileSource({ contact, onSaveRawDump, onReextractProfile }) {
+  const [localRawDump, setLocalRawDump] = useState(contact?.raw_dump || '');
+
+  useEffect(() => {
+    setLocalRawDump(contact?.raw_dump || '');
+  }, [contact?.id, contact?.raw_dump]);
+
   return (
-    <Card glass={true} glow={false} style={{ padding: '3rem', display: 'flex', alignItems: 'center', justifycontent: 'center', justifyContent: 'center' }}>
-      <Button
-        variant="outline"
-        id="inspectFpSourceBtn"
-        onClick={() => onInspectSource(contact.name)}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: '14px', height: '14px' }}>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
-        </svg>
-        Inspect source
-      </Button>
-    </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+        <div className="card-title" style={{ marginBottom: '0.8rem' }}>Current research dump</div>
+        <pre
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: '0.78rem',
+            whiteSpace: 'pre-wrap',
+            background: 'var(--panel-sunk)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-s)',
+            padding: '1rem',
+            maxHeight: '14rem',
+            overflowY: 'auto',
+            margin: 0,
+            color: 'var(--text-2)'
+          }}
+        >
+          {contact.raw_dump || 'No research dump available.'}
+        </pre>
+      </Card>
+
+      <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+        <div className="divider-label" style={{ marginBottom: '1.2rem' }}>
+          <span>Update research</span>
+          <div className="rule"></div>
+        </div>
+
+        <div className="field" style={{ marginBottom: '1.2rem' }}>
+          <textarea
+            value={localRawDump}
+            onChange={(e) => setLocalRawDump(e.target.value)}
+            rows={10}
+            placeholder="Paste updated or additional research here..."
+            style={{
+              width: '100%',
+              background: 'var(--panel-sunk)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-s)',
+              color: 'var(--text-1)',
+              fontFamily: 'var(--mono)',
+              fontSize: '0.78rem',
+              padding: '0.6rem',
+              resize: 'vertical',
+              outline: 'none'
+            }}
+          />
+        </div>
+
+        <div className="btn-row" style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button
+            variant="primary"
+            onClick={async () => {
+              await onSaveRawDump(contact.id, localRawDump);
+              await onReextractProfile(contact.id);
+            }}
+          >
+            Save & Re-extract
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => onSaveRawDump(contact.id, localRawDump)}
+          >
+            Save only
+          </Button>
+        </div>
+      </Card>
+    </div>
   );
 }

@@ -130,6 +130,7 @@ def main():
     parser_draft = subparsers.add_parser("draft", help="Draft a personalized cold outreach email")
     parser_draft.add_argument("client_id", type=int, help="ID of the client to draft email for")
     parser_draft.add_argument("--tone", default="direct", help="Requested email tone")
+    parser_draft.add_argument("--instruction", default=None, help="Custom drafting instructions")
     
     # add-note command
     parser_note = subparsers.add_parser("add-note", help="Add a communication tone note/feedback for a client")
@@ -147,7 +148,7 @@ def main():
     elif args.command == "extract":
         run_extraction(args.client_id)
     elif args.command == "draft":
-        run_draft(args.client_id, args.tone)
+        run_draft(args.client_id, args.tone, args.instruction)
     elif args.command == "add-note":
         add_note(args)
     elif args.command == "update-memory":

@@ -19,7 +19,7 @@ export default function Topbar({
   onSearchQueryChange,
   onShowNotifications,
   onOpenImport,
-  onOpenNewDeal,
+  onOpenNewContact,
   contactsCount = 0
 }) {
   let [title, sub] = TITLES[currentView] || ["Dashboard", ""];
@@ -55,9 +55,9 @@ export default function Topbar({
           <ImportIcon style={{ width: '14px', height: '14px' }} />
           Import leads
         </Button>
-        <Button variant="primary" id="quickAddBtn" onClick={onOpenNewDeal}>
+        <Button variant="primary" id="quickAddBtn" onClick={onOpenNewContact}>
           <PlusIcon />
-          New Deal
+          New Contact
         </Button>
       </div>
     </header>

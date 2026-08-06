@@ -23,7 +23,7 @@ def get_paths():
     emails_path = os.path.join(project_dir, "examples", "my_emails.json")
     return db_path, emails_path
 
-def run_draft(client_id, tone):
+def run_draft(client_id, tone, instruction=None):
     db_path, emails_path = get_paths()
     if not os.path.exists(db_path):
         print(f"Error: Database file not found at {db_path}. Please initialize database first.")
@@ -84,6 +84,8 @@ def run_draft(client_id, tone):
             tone_template = f.read()
             
         skill_template = outreach_template + "\n\n" + tone_template
+        if instruction and instruction.strip():
+            skill_template += f"\n\nCRITICAL CUSTOM DRAFTING INSTRUCTIONS FROM USER:\n- Follow these custom constraints strictly: {instruction.strip()}"
 
         # 5. Build prompt using centralized Prompt Builder
         # Include current task variables and strategy details
@@ -163,6 +165,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Draft an email for a client.")
     parser.add_argument("client_id", type=int, help="The client ID")
     parser.add_argument("--tone", default="direct", help="Requested email tone")
+    parser.add_argument("--instruction", default=None, help="Custom drafting instructions")
     
     args = parser.parse_args()
-    run_draft(args.client_id, args.tone)
+    run_draft(args.client_id, args.tone, args.instruction)

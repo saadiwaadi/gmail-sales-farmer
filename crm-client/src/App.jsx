@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import SegmentsRail from './components/layout/SegmentsRail';
 import Topbar from './components/layout/Topbar';
@@ -8,6 +8,7 @@ import Slideover from './components/ui/Slideover';
 import Badge from './components/ui/Badge';
 import Button from './components/ui/Button';
 import ToneSelect from './components/ui/ToneSelect';
+import Toggle from './components/ui/Toggle';
 
 // Views
 import Dashboard from './views/Dashboard';
@@ -31,6 +32,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [densityCompact, setDensityCompact] = useState(true);
   const [returnToView, setReturnToView] = useState('dashboard');
+  const [activeContactName, setActiveContactName] = useState(null);
 
   // Auth state
   const [me, setMe] = useState(null);
@@ -43,6 +45,8 @@ export default function App() {
   const [kanban, setKanban] = useState({});
   const [emailVariant, setEmailVariant] = useState(0);
   const [emailDraft, setEmailDraft] = useState({ subject: '', body: '', loading: false, error: null });
+
+  const activeContactId = contacts.find(c => c.name === activeContactName)?.id;
 
   // Overlay States
   const [slideover, setSlideover] = useState({
@@ -239,6 +243,7 @@ export default function App() {
   };
 
   const handleOpenContact = (name) => {
+    setActiveContactName(name);
     setSlideover({
       show: true,
       type: 'contact-details',
@@ -259,46 +264,28 @@ export default function App() {
     }
   };
 
-  const handleOpenEmailComposer = (contactName) => {
-    setModal({
-      show: true,
-      type: 'email-composer',
-      data: contactName
-    });
-
+  const handleOpenEmailComposer = async (contactName) => {
     const contact = contacts.find(c => c.name === contactName);
-    if (contact) {
-      generateEmailDraft(contact);
-    }
-  };
+    if (!contact) return;
 
-  const generateEmailDraft = async (contact) => {
     setEmailDraft({ subject: '', body: '', loading: true, error: null });
+    addToast('processing', `Drafting message for ${contactName}...`);
     try {
       const res = await api('POST', `/api/contacts/${contact.id}/draft`, {
         tone: contact.tone_note || 'curiosity'
       });
       setEmailDraft({ subject: res.subject, body: res.body, loading: false, error: null });
-      await loadContacts(); // Reload contacts to display the new draft message
+      setSlideover({
+        show: true,
+        type: 'follow-up',
+        data: contact.name
+      });
+      addToast('ready', 'Email draft ready.');
+      await loadContacts();
     } catch (err) {
       console.error('Draft generation error:', err);
       setEmailDraft({ subject: '', body: '', loading: false, error: err.message || 'Failed to generate draft' });
-    }
-  };
-
-  const handleSendEmail = (contactName) => {
-    const toastMsg = contactName
-      ? `Sent to ${contactName}.`
-      : `Sent to all contacts in this segment.`;
-    
-    setModal({ show: false, type: null, data: null });
-    addToast('ready', toastMsg);
-  };
-
-  const handleRegenerateEmail = (contactName) => {
-    const contact = contacts.find(c => c.name === contactName);
-    if (contact) {
-      generateEmailDraft(contact);
+      addToast('attn', 'Failed to generate draft.');
     }
   };
 
@@ -365,6 +352,12 @@ export default function App() {
     }
   };
 
+  const handleGenerateDraftInline = async (contactId, tone, instruction) => {
+    const res = await api('POST', `/api/contacts/${contactId}/draft`, { tone, custom_instruction: instruction });
+    await loadContacts();
+    return { subject: res.subject, body: res.body };
+  };
+
   const handleInspectSource = (contactName) => {
     setModal({
       show: true,
@@ -374,36 +367,59 @@ export default function App() {
   };
 
   // Add Deal stage kanban list
-  const handleAddDeal = (stage) => {
-    // Quick modal deal prompt
+  const handleAddContact = (stage) => {
     setModal({
       show: true,
-      type: 'new-deal',
+      type: 'new-contact',
       data: stage
     });
   };
 
-  const handleCreateDealConfirm = async (stage, contactName, property, value) => {
-    const name = contactName.trim() || 'New Contact';
-    const propVal = property.trim() || 'Details pending';
-    const scoreVal = Math.min(100, Math.max(0, parseInt(value.replace(/[^0-9]/g, '')) / 10000 || 50));
+  const handleCreateContactConfirm = async (stage, data, shouldExtract) => {
+    const name = data.name.trim() || 'New Contact';
+    const company = data.company.trim() || 'Details pending';
+    const role = data.role.trim() || '';
+    const email = data.email.trim() || '';
+    const raw_dump = data.raw_dump.trim() || `Name: ${name} | Company: ${company}`;
+
+    if (shouldExtract) {
+      addToast('processing', 'Creating contact and extracting profile...');
+    } else {
+      addToast('processing', 'Creating contact...');
+    }
 
     try {
-      await api('POST', '/api/contacts', {
+      const res = await api('POST', '/api/contacts', {
         name,
-        company: propVal,
-        raw_dump: `Name: ${name} | Stage: ${stage} | Property: ${propVal} | Value: ${value}`,
-        type: 'buyer',
-        stage,
-        score: scoreVal,
-        email: `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@mail.com`
+        company,
+        role,
+        email,
+        raw_dump,
+        type: 'cold',
+        stage: stage || 'Not Contacted',
+        score: 50
       });
-      addToast('ready', `${name} added to Pipeline → ${stage}.`);
+
+      const newId = res.contact?.id;
+
       setModal({ show: false, type: null, data: null });
-      await loadContacts();
+
+      if (shouldExtract && newId) {
+        api('POST', `/api/contacts/${newId}/extract`).then(async () => {
+          addToast('ready', 'Contact created. AI extraction queued.');
+          await loadContacts();
+        }).catch((err) => {
+          console.error('Extraction trigger error:', err);
+          addToast('attn', 'Contact created but AI extraction failed to start.');
+          loadContacts();
+        });
+      } else {
+        addToast('ready', 'Contact created.');
+        await loadContacts();
+      }
     } catch (err) {
-      console.error('Error creating contact/deal:', err);
-      addToast('attn', 'Failed to save deal.');
+      console.error('Error creating contact:', err);
+      addToast('attn', 'Failed to save contact.');
     }
   };
 
@@ -587,9 +603,13 @@ export default function App() {
 
   const renderFollowupSlideover = () => {
     const name = slideover.data;
+    const bodyContent = emailDraft.body || `Hi ${name.split(' ')[0]},\n\n(No draft generated)`;
+    const subjectContent = emailDraft.subject || '';
+
     const handleCopyFollowup = () => {
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(`Hi ${name.split(' ')[0]},\n\nWanted to check in — it's been a few days since we last spoke...`).catch(() => {});
+        const textToCopy = subjectContent ? `Subject: ${subjectContent}\n\n${bodyContent}` : bodyContent;
+        navigator.clipboard.writeText(textToCopy).catch(() => {});
       }
       addToast('ready', 'Copied to clipboard.');
     };
@@ -599,11 +619,8 @@ export default function App() {
         <div className="status ready" style={{ marginBottom: '1rem' }}>
           <span className="sdot" style={{ background: 'var(--accent)' }}></span>Ready to send
         </div>
-        <div className="read-block" style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
-          <p className="greet">Hi {name.split(' ')[0]},</p>
-          <p>Wanted to check in — it's been a few days since we last spoke, and I know the pace of looking at homes can make details blur together.</p>
-          <p>If it's still useful, I can put together a short shortlist based on what you liked most last time, no obligation either way.</p>
-          <p className="greet">— Saad</p>
+        <div className="read-block" style={{ fontSize: '0.85rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+          {bodyContent}
         </div>
         <div className="btn-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '1.2rem' }}>
           <Button variant="primary" onClick={() => { setSlideover({ show: false, type: null, data: null }); addToast('ready', `Follow-up sent to ${name}.`); }}>
@@ -681,12 +698,12 @@ export default function App() {
         <div className="right-column">
           <Topbar
              currentView={currentView}
-             contactNameForFullProfile={slideover.data || (currentView === 'contact-full' ? returnToView : '')}
+             contactNameForFullProfile={activeContactName || (currentView === 'contact-full' ? returnToView : '')}
              searchQuery={searchQuery}
              onSearchQueryChange={setSearchQuery}
              onShowNotifications={() => setSlideover({ show: true, type: 'notification', data: null })}
              onOpenImport={() => setModal({ show: true, type: 'import', data: null })}
-             onOpenNewDeal={() => setModal({ show: true, type: 'new-deal', data: 'New Lead' })}
+             onOpenNewContact={() => setModal({ show: true, type: 'new-contact', data: 'Not Contacted' })}
              contactsCount={contacts.length}
           />
 
@@ -701,7 +718,10 @@ export default function App() {
             />
 
             {/* View router container */}
-            <main className="dashboard-pill" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+            <main
+              className={currentView === 'contacts' ? '' : 'dashboard-pill'}
+              style={currentView === 'contacts' ? { flex: 1, display: 'flex', overflow: 'hidden', padding: 0 } : { flex: 1, overflowY: 'auto', padding: '24px' }}
+            >
               
               {currentView === 'dashboard' && (
                 <Dashboard
@@ -719,15 +739,20 @@ export default function App() {
                   contactsList={contacts}
                   activeSegment={activeSegment}
                   onOpenContact={handleOpenContact}
-                  onAddDeal={handleAddDeal}
+                  onAddDeal={handleAddContact}
                 />
               )}
 
               {currentView === 'contacts' && (
                 <Contacts
-                  contactsList={getSearchFilteredContacts()}
+                  contactsList={contacts}
                   activeSegment={activeSegment}
                   onOpenContact={handleOpenContact}
+                  onToneChange={handleToneChange}
+                  onUpdateMessageOutcome={handleUpdateMessageOutcome}
+                  onGenerateDraftInline={handleGenerateDraftInline}
+                  availableTones={availableTones}
+                  loadContacts={loadContacts}
                 />
               )}
 
@@ -748,7 +773,9 @@ export default function App() {
 
               {currentView === 'contact-full' && (
                 <ContactFull
-                  contact={contacts.find(x => x.name === slideover.data) || contacts[0]}
+                  contact={contacts.find(x => x.name === activeContactName) 
+                    || contacts.find(x => x.id === activeContactId) 
+                    || null}
                   onBack={() => setCurrentView(returnToView)}
                   onToneChange={handleToneChange}
                   onGenerateDraft={handleOpenEmailComposer}
@@ -760,6 +787,7 @@ export default function App() {
                   onSaveMessageDraft={handleSaveMessageDraft}
                   onUpdateMessageOutcome={handleUpdateMessageOutcome}
                   onRegenerateDraftDirect={handleRegenerateDraftDirect}
+                  onGenerateDraftInline={handleGenerateDraftInline}
                 />
               )}
 
@@ -779,7 +807,7 @@ export default function App() {
         }
         subtitle={
           slideover.type === 'notification' ? '4 unread' :
-          slideover.type === 'follow-up' ? 'Drafted just now — reads back in about 20 seconds.' :
+          slideover.type === 'follow-up' ? `Drafted for ${activeContactName || slideover.data}` :
           ''
         }
         headerActions={
@@ -789,8 +817,9 @@ export default function App() {
               style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem' }}
               onClick={() => {
                 // Open full profile view
+                setActiveContactName(slideover.data); // preserve before closing
                 handleViewChange('contact-full');
-                setSlideover(prev => ({ ...prev, show: false }));
+                setSlideover({ show: false, type: null, data: null });
               }}
             >
               Open full profile →
@@ -807,6 +836,8 @@ export default function App() {
       <Modal
         show={modal.show}
         onClose={() => setModal({ show: false, type: null, data: null })}
+        className={modal.type === 'new-contact' ? 'wizard-card-bg' : ''}
+        style={modal.type === 'new-contact' ? { width: '440px', padding: '34px 30px 26px', borderRadius: '28px' } : {}}
       >
         {modal.type === 'import' && (
           <ImportWizard
@@ -825,10 +856,11 @@ export default function App() {
           />
         )}
 
-        {modal.type === 'new-deal' && (
-          <NewDealForm
+        {modal.type === 'new-contact' && (
+          <NewContactForm
             stage={modal.data}
-            onCreate={(name, prop, val) => handleCreateDealConfirm(modal.data, name, prop, val)}
+            onCreate={(data, shouldExtract) => handleCreateContactConfirm(modal.data, data, shouldExtract)}
+            onConfirmImport={handleAutoDistributeLeads}
             onCancel={() => setModal({ show: false, type: null, data: null })}
           />
         )}
@@ -876,41 +908,364 @@ export default function App() {
   );
 }
 
-// Inline Sub-component for New Deal Form
-function NewDealForm({ stage, onCreate, onCancel }) {
+// Inline Sub-component for New Contact Form (Stepped Wizard Flow)
+function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
+  const [step, setStep] = useState(0);
+  
+  // Step 1: Manual Form Fields
   const [name, setName] = useState('');
-  const [property, setProperty] = useState('');
-  const [value, setValue] = useState('');
+  const [company, setCompany] = useState('');
+  const [dealValue, setDealValue] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedStage, setSelectedStage] = useState(stage || 'Not Contacted');
+  const [notes, setNotes] = useState('');
+  const [shouldExtract, setShouldExtract] = useState(true);
+  
+  // Step 2: File Import State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Sync stage prop if it changes
+  useEffect(() => {
+    if (stage) {
+      setSelectedStage(stage);
+    }
+  }, [stage]);
+
+  const handleManualSave = async () => {
+    if (!name || !company) {
+      addToast('attn', 'Name and Company are required.');
+      return;
+    }
+    setLoading(true);
+    // Combine phone, deal value, and notes into raw_dump
+    const rawDumpParts = [];
+    if (phone) rawDumpParts.push(`Phone: ${phone}`);
+    if (dealValue) rawDumpParts.push(`Deal Value: $${dealValue}`);
+    if (notes) rawDumpParts.push(`Notes: ${notes}`);
+    const rawDump = rawDumpParts.join('\n') || 'Manual entry contact created.';
+
+    try {
+      await onCreate({
+        name,
+        company,
+        role: 'Client', // Default role
+        email,
+        raw_dump: rawDump,
+        score: Number(dealValue) || 50,
+        stage: selectedStage
+      }, shouldExtract);
+      setLoading(false);
+      setStep(3); // success step
+    } catch (err) {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    setLoading(true);
+    try {
+      await onConfirmImport();
+      setLoading(false);
+      setStep(3); // success step
+    } catch (err) {
+      setLoading(false);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const removeFile = (e) => {
+    e.stopPropagation();
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   return (
-    <div>
-      <div className="card-title" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ width: '16px', height: '16px' }}>
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-          <line x1="7" y1="7" x2="7.01" y2="7" />
-        </svg>
-        <span>New deal ({stage})</span>
+    <div style={{ position: 'relative' }}>
+      {/* Progress Dots */}
+      <div className="progress">
+        <span className={`dot ${step === 0 ? 'active' : step > 0 ? 'done' : ''}`}></span>
+        <span className={`dot ${step === 1 || (step === 2 && !selectedFile) ? 'active' : step > 1 ? 'done' : ''}`}></span>
+        <span className={`dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}></span>
+        <span className={`dot ${step === 3 ? 'active' : ''}`}></span>
       </div>
-      <div className="field">
-        <label>Contact name</label>
-        <input placeholder="e.g. Jordan Blake" value={name} onChange={(e) => setName(e.target.value)} />
+
+      <div id="steps">
+        {/* STEP 0: choose entry method */}
+        <div className={`step ${step === 0 ? 'active' : ''}`}>
+          <div className="head-icon-wrap">
+            <div className="head-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="wizard-title">Add a client</h1>
+          <p className="wizard-subtitle">How would you like to bring this client into your pipeline?</p>
+
+          <div className="option-row" onClick={() => setStep(1)}>
+            <div className="row-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </div>
+            <div className="row-text">
+              <div className="t">Manual entry</div>
+              <div className="s">Fill in client &amp; deal details yourself</div>
+            </div>
+            <div className="row-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="option-row" onClick={() => setStep(1)}>
+            <div className="row-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+            </div>
+            <div className="row-text">
+              <div className="t">Import contact</div>
+              <div className="s">Pull details from a saved contact</div>
+            </div>
+            <div className="row-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="option-row" onClick={() => setStep(2)}>
+            <div className="row-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </div>
+            <div className="row-text">
+              <div className="t">Bulk import</div>
+              <div className="s">Drop a spreadsheet of leads or clients</div>
+            </div>
+            <div className="row-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* STEP 1: manual form */}
+        <div className={`step ${step === 1 ? 'active' : ''}`}>
+          <div className="head-icon-wrap">
+            <div className="head-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="wizard-title">Client details</h1>
+          <p className="wizard-subtitle">Basic info so this lead lands in the right stage.</p>
+
+          <div className="field">
+            <label>Client name</label>
+            <input type="text" placeholder="e.g. Sarah Ahmed" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Company</label>
+              <input type="text" placeholder="Company name" value={company} onChange={(e) => setCompany(e.target.value)} />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Deal value ($)</label>
+              <input type="text" placeholder="600" value={dealValue} onChange={(e) => setDealValue(e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Email</label>
+              <input type="email" placeholder="client@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Phone</label>
+              <input type="tel" placeholder="+92 300 0000000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+          </div>
+          <div className="field">
+            <label>Pipeline stage</label>
+            <select className="tone-select" value={selectedStage} onChange={(e) => setSelectedStage(e.target.value)}>
+              <option value="Not Contacted">Not Contacted</option>
+              <option value="Research Done">Research Done</option>
+              <option value="Drafted">Drafted</option>
+              <option value="Sent">Sent</option>
+              <option value="Replied / Booked">Replied / Booked</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Notes</label>
+            <textarea 
+              rows={4}
+              placeholder="Any context worth remembering..." 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)} 
+              style={{ width: '100%', background: 'var(--panel-sunk)', border: '1px solid var(--border)', borderRadius: 'var(--radius-s)', color: 'var(--text-1)', padding: '0.6rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.8rem', marginBottom: '1.2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>Trigger AI Extraction</span>
+              <span style={{ fontSize: '0.70rem', color: 'var(--text-3)' }}>Automatically extract structured data using LLM</span>
+            </div>
+            <Toggle on={shouldExtract} onChange={() => setShouldExtract(!shouldExtract)} />
+          </div>
+
+          <button className="primary-btn" onClick={handleManualSave} disabled={loading}>
+            {loading ? 'Saving client...' : 'Save client'}
+          </button>
+        </div>
+
+        {/* STEP 2: bulk import / dropzone */}
+        <div className={`step ${step === 2 ? 'active' : ''}`}>
+          <div className="head-icon-wrap">
+            <div className="head-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="wizard-title">Bulk import</h1>
+          <p className="wizard-subtitle">Drop a spreadsheet and we'll map the columns for you.</p>
+
+          <div 
+            className={`dropzone ${dragActive ? 'drag' : ''}`}
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="dz-ico">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div className="dz-title">Drop your file here</div>
+            <div className="dz-sub">or <b>click to browse</b> — .xlsx, .csv up to 10MB</div>
+          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            accept=".csv,.xlsx,.xls" 
+            onChange={handleFileChange}
+          />
+
+          <div className={`file-chip ${selectedFile ? 'show' : ''}`}>
+            <div className="fc-ico">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </div>
+            <div className="fc-info">
+              <div className="fc-name">{selectedFile?.name || ''}</div>
+              <div className="fc-size">{selectedFile ? `${(selectedFile.size / 1024).toFixed(0)} KB` : ''}</div>
+            </div>
+            <div className="fc-remove" onClick={removeFile}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </div>
+          </div>
+
+          <button className="primary-btn" onClick={handleBulkImport} disabled={loading || !selectedFile}>
+            {loading ? 'Importing leads...' : 'Import & continue'}
+          </button>
+        </div>
+
+        {/* STEP 3: success */}
+        <div className={`step ${step === 3 ? 'active' : ''}`}>
+          <div className="success-state">
+            <div className="s-ico">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h1 className="wizard-title">Client added</h1>
+            <p className="wizard-subtitle" style={{ marginBottom: '22px' }}>This lead now lives in your pipeline. You can edit it any time.</p>
+            <button className="primary-btn" onClick={onCancel}>Done</button>
+          </div>
+        </div>
       </div>
-      <div className="field">
-        <label>Property address</label>
-        <input placeholder="e.g. 88 Sycamore St" value={property} onChange={(e) => setProperty(e.target.value)} />
-      </div>
-      <div className="field">
-        <label>Estimated value</label>
-        <input placeholder="e.g. $450,000" value={value} onChange={(e) => setValue(e.target.value)} />
-      </div>
-      <div className="btn-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '1.2rem' }}>
-        <Button variant="primary" onClick={() => onCreate(name, property, value)}>
-          Create deal
-        </Button>
-        <Button variant="ghost" onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
+
+      {step !== 3 && (
+        <div className="footer" style={{ marginTop: '22px', display: 'flex', justifyContent: 'space-between' }}>
+          <button className="pill-btn" onClick={() => {
+            if (step === 0) onCancel();
+            else setStep(0);
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Back
+          </button>
+          <button className="pill-btn" onClick={onCancel}>
+            Skip
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

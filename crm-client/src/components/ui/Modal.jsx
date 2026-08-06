@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Modal({ show, onClose, children }) {
+export default function Modal({ show, onClose, className = '', style = {}, children }) {
   return (
     <>
       <div
@@ -12,7 +12,7 @@ export default function Modal({ show, onClose, children }) {
         className={`modal-wrap ${show ? 'show' : ''}`}
         style={{ pointerEvents: show ? 'auto' : 'none' }}
       >
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className={`modal ${className}`} style={style} onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>
