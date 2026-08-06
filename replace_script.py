@@ -41,13 +41,32 @@ let ME = null;
 async function loadContacts() {
   try {
     const res = await fetch('/api/contacts');
+    if (res.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
     const data = await res.json();
-    CONTACTS = data.contacts || data;
+    const fetchedContacts = data.contacts || data || [];
+
+    CONTACTS = await Promise.all(fetchedContacts.map(async (c) => {
+      try {
+        const msgRes = await fetch(`/api/contacts/${c.id}/messages`);
+        const msgData = await msgRes.json();
+        return {
+          ...c,
+          messages: msgData.messages || msgData || []
+        };
+      } catch (err) {
+        console.error(`Failed to fetch messages for contact ${c.id}:`, err);
+        return { ...c, messages: [] };
+      }
+    }));
+
     renderContacts();
     renderKanban();
     renderSignals();
     renderActivity();
-    renderBars();
+    updateDashboardStats();
 
     // self-healing glow-urgent logic
     if (CONTACTS.some && CONTACTS.some(c => c.ai_status === 'FAILED')) {
@@ -64,6 +83,33 @@ async function loadContacts() {
   } catch (err) {
     console.error('Failed to load contacts:', err);
   }
+}
+
+function updateDashboardStats() {
+  const totalContacts = CONTACTS.length;
+  const aiReady = CONTACTS.filter(c => c.ai_status === 'READY').length;
+  
+  let repliedThisWeek = 0;
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  CONTACTS.forEach(c => {
+    if (c.messages) {
+      c.messages.forEach(m => {
+        if (m.outcome === 'replied' && m.created_at && new Date(m.created_at) >= sevenDaysAgo) {
+          repliedThisWeek++;
+        }
+      });
+    }
+  });
+
+  const elTotal = document.getElementById('statTotalContacts');
+  const elAiReady = document.getElementById('statAiReady');
+  const elReplied = document.getElementById('statRepliedThisWeek');
+  
+  if (elTotal) elTotal.textContent = totalContacts;
+  if (elAiReady) elAiReady.textContent = aiReady;
+  if (elReplied) elReplied.textContent = repliedThisWeek;
 }
 
 const EMAIL_VARIANTS = [
@@ -126,17 +172,28 @@ function deriveSignals() {
     }));
 }
 
+const STAGE_MAPPING = {
+  'New Lead': 'Not Contacted',
+  'Qualified': 'Research Done',
+  'Showing': 'Drafted',
+  'Offer': 'Sent',
+  'Closed': 'Replied / Booked'
+};
+function mapStage(dbStage) {
+  return STAGE_MAPPING[dbStage] || dbStage;
+}
+
 function buildKanbanData() {
   const board = {
-    "New Lead": [],
-    "Qualified": [],
-    "Showing": [],
-    "Offer": [],
-    "Closed": []
+    "Not Contacted": [],
+    "Research Done": [],
+    "Drafted": [],
+    "Sent": [],
+    "Replied / Booked": []
   };
   
   CONTACTS.forEach(c => {
-    let stage = c.stage || 'New Lead';
+    let stage = mapStage(c.stage || 'New Lead');
     if (!board[stage]) {
       board[stage] = [];
     }
@@ -216,7 +273,18 @@ function aiStatusBadge(status){
 
 function renderContacts(filter='all'){
   const tbody = document.getElementById('contactsTable');
-  const rows = CONTACTS.filter(c => filter==='all' ? true : c.type===filter);
+  const rows = CONTACTS.filter(c => {
+    if (filter === 'all') return true;
+    if (filter === 'replied') {
+      return c.messages && c.messages.some(m => m.outcome === 'replied');
+    }
+    const typeMapping = {
+      'cold': 'buyer',
+      'warm': 'seller',
+      'active': 'nurture'
+    };
+    return c.type === (typeMapping[filter] || filter);
+  });
   if (rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; opacity:0.25;">
       <div style="margin-bottom:0.5rem;">${ICONS.user.replace('style="width:14px; height:14px; display:inline-block; color:var(--text-3); vertical-align:middle; margin-right:0.4rem;"', 'style="width:32px; height:32px; display:block; margin:0 auto; color:var(--text-3);"')}</div>
@@ -229,7 +297,7 @@ function renderContacts(filter='all'){
       <td>${aiStatusBadge(c.ai_status || 'NOT_STARTED')}</td>
       <td class="cell-primary">${c.name}</td>
       <td class="cell-muted" style="text-transform:capitalize">${c.type || 'buyer'}</td>
-      <td>${c.stage || 'New Lead'}</td>
+      <td>${mapStage(c.stage || 'New Lead')}</td>
       <td class="cell-muted">${c.last || 'Never'}</td>
       <td style="text-align:right" class="cell-muted">${c.score || 50}</td>
     </tr>
@@ -243,8 +311,16 @@ function renderKanban(filter='all'){
     const filteredCards = cards.filter(card => {
       if (filter === 'all') return true;
       const contact = CONTACTS.find(ct => ct.name === card.name);
-      const type = contact ? contact.type : 'buyer';
-      return type === filter;
+      if (!contact) return false;
+      if (filter === 'replied') {
+        return contact.messages && contact.messages.some(m => m.outcome === 'replied');
+      }
+      const typeMapping = {
+        'cold': 'buyer',
+        'warm': 'seller',
+        'active': 'nurture'
+      };
+      return contact.type === (typeMapping[filter] || filter);
     });
     
     const total = filteredCards.reduce((s,c) => s + Number(c.value.replace(/[$,]/g,'')), 0);
@@ -371,12 +447,12 @@ async function openContact(name){
       CONTACTS[idx] = c;
     }
     
-    openSlideover(c.name, `${c.type ? c.type.toUpperCase() : 'BUYER'} · ${c.stage || 'New Lead'} · Score: ${c.score || 50}`, `
+    openSlideover(c.name, `${c.type ? c.type.toUpperCase() : 'BUYER'} · ${mapStage(c.stage || 'New Lead')} · Score: ${c.score || 50}`, `
       <div class="profile-name">${c.name}</div>
       <div style="margin-bottom:0.5rem;" class="ai-status-container">${aiStatusBadge(c.ai_status || 'NOT_STARTED')}</div>
       <div class="profile-tag">${c.role ? c.role + ' @ ' + c.company : c.company}</div>
 
-      <div class="kv-row"><span class="k">Stage</span><span>${c.stage || 'New Lead'}</span></div>
+      <div class="kv-row"><span class="k">Stage</span><span>${mapStage(c.stage || 'New Lead')}</span></div>
       <div class="kv-row"><span class="k">Lead score</span><span>${c.score || 50}</span></div>
       <div class="kv-row"><span class="k">Last contact</span><span>${c.last || 'Never'}</span></div>
       <div class="kv-row"><span class="k">Email</span><span>${c.email || '—'}</span></div>
@@ -431,21 +507,20 @@ async function openFullProfile(name){
     }
 
     document.getElementById('fpName').textContent = c.name;
-    document.getElementById('fpTag').textContent = `${(c.type || 'buyer').toUpperCase()} · ${c.stage || 'New Lead'} · Score: ${c.score || 50}`;
+    document.getElementById('fpTag').textContent = `${(c.type || 'buyer').toUpperCase()} · ${mapStage(c.stage || 'New Lead')} · Score: ${c.score || 50}`;
     document.getElementById('fpStatus').innerHTML = aiStatusBadge(c.ai_status);
     
     // Render panels
-    document.getElementById('fp-overview').innerHTML = renderFpOverview(c);
-    document.getElementById('fp-messages').innerHTML = renderFpMessages(c);
-    document.getElementById('fp-activity').innerHTML = renderFpActivity(c);
-    document.getElementById('fp-source').innerHTML = renderFpSource(c);
+    document.getElementById('fp-profile').innerHTML = renderFpProfile(c);
+    document.getElementById('fp-outreach').innerHTML = renderFpOutreach(c);
+    document.getElementById('fp-history').innerHTML = renderFpHistory(c);
     
-    // Activate default overview tab
+    // Activate default profile tab
     document.querySelectorAll('.fp-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === 'overview');
+      btn.classList.toggle('active', btn.dataset.tab === 'profile');
     });
     document.querySelectorAll('.fp-panel').forEach(panel => {
-      panel.classList.toggle('hidden', panel.id !== 'fp-overview');
+      panel.classList.toggle('hidden', panel.id !== 'fp-profile');
     });
 
     // Hide all other views
@@ -463,7 +538,7 @@ async function openFullProfile(name){
   }
 }
 
-function renderFpOverview(c){
+function renderFpProfile(c) {
   const renderChips = (arr) => {
     if (!arr || arr.length === 0) return '<span class="cell-muted">—</span>';
     return arr.map(txt => `<span class="chip active" style="margin-right:0.3rem; margin-bottom:0.3rem; display:inline-block; border-radius:99px; padding:0.25rem 0.6rem; font-size:0.68rem; border:none; background:var(--accent-dim); color:var(--accent); cursor:default;">${txt}</span>`).join('');
@@ -471,36 +546,88 @@ function renderFpOverview(c){
   const ep = c.extracted_profile || { pain_points_inferred: [], recent_signals: [], tone_of_voice: "—", credibility_signals: [], likely_priorities: [], avoid_mentioning: [] };
   
   return `
-    <div class="card glass" style="padding:1.4rem; display:flex; flex-direction:column; gap:1.1rem; margin-bottom:1.5rem;">
-      <div class="glass-edge"></div>
-      <div class="kv-row"><span class="k">Tone of voice</span><span>${ep.tone_of_voice || '—'}</span></div>
-      <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
-        <span class="k">Inferred Pain Points</span>
-        <div>${renderChips(ep.pain_points_inferred)}</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start; margin-bottom: 1.5rem;">
+      <div class="card glass" style="padding:1.4rem; display:flex; flex-direction:column; gap:1.1rem;">
+        <div class="glass-edge"></div>
+        <div class="kv-row"><span class="k">Tone of voice</span><span>${ep.tone_of_voice || '—'}</span></div>
+        <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
+          <span class="k">Inferred Pain Points</span>
+          <div>${renderChips(ep.pain_points_inferred)}</div>
+        </div>
+        <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
+          <span class="k">Recent Signals</span>
+          <div>${renderChips(ep.recent_signals)}</div>
+        </div>
+        <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
+          <span class="k">Credibility Signals</span>
+          <div>${renderChips(ep.pitch_points_used || ep.credibility_signals)}</div>
+        </div>
+        <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
+          <span class="k">Likely Priorities</span>
+          <div>${renderChips(ep.likely_priorities)}</div>
+        </div>
+        <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
+          <span class="k">Avoid Mentioning</span>
+          <div>${renderChips(ep.avoid_mentioning)}</div>
+        </div>
+        
+        ${renderToneSelect(c)}
       </div>
-      <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
-        <span class="k">Recent Signals</span>
-        <div>${renderChips(ep.recent_signals)}</div>
+
+      <div class="card glass" style="padding:1.4rem; display:flex; flex-direction:column; gap:1.1rem;">
+        <div class="glass-edge"></div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-1);">Raw Research Dump</div>
+        <textarea id="fpRawDumpTextarea" style="width:100%; height:250px; background:var(--panel-sunk); border:1px solid var(--border); border-radius:var(--radius-s); padding:0.7rem; color:var(--text-1); font-family:var(--mono); font-size:0.75rem; line-height:1.4; outline:none; resize:none;">${c.raw_dump || c.raw_research_dump || ''}</textarea>
+        <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+          <button class="btn btn-primary" id="saveRawDumpBtn" data-contact-id="${c.id}" style="flex:1; justify-content:center;">Save Dump</button>
+          <button class="btn btn-outline" id="reextractAiBtn" data-contact-id="${c.id}" style="flex:1; justify-content:center;">Re-extract via AI</button>
+        </div>
       </div>
-      <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
-        <span class="k">Credibility Signals</span>
-        <div>${renderChips(ep.pitch_points_used || ep.credibility_signals)}</div>
-      </div>
-      <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
-        <span class="k">Likely Priorities</span>
-        <div>${renderChips(ep.likely_priorities)}</div>
-      </div>
-      <div class="kv-row" style="flex-direction:column; align-items:flex-start; gap:0.4rem;">
-        <span class="k">Avoid Mentioning</span>
-        <div>${renderChips(ep.avoid_mentioning)}</div>
-      </div>
-      
-      ${renderToneSelect(c)}
     </div>
   `;
 }
 
-function renderFpMessages(c){
+function renderFpOutreach(c) {
+  const latestMessage = c.messages && c.messages.length > 0 ? c.messages[0] : null;
+  const isDraft = latestMessage && (latestMessage.outcome === 'no_response' || !latestMessage.outcome);
+  const subjectText = isDraft ? (latestMessage.subject_line || latestMessage.subject || '') : '';
+  const bodyText = isDraft ? (latestMessage.body || '') : '';
+
+  if (isDraft) {
+    return `
+      <div class="card glass" style="padding:1.4rem; display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem;">
+        <div class="glass-edge"></div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-1);">Outreach Draft Composer</div>
+        <div class="field">
+          <label>Subject Line</label>
+          <input id="fpOutreachSubject" value="${subjectText}" placeholder="Enter subject line..." style="width: 100%; padding: 0.5rem; background: var(--panel-sunk); border: 1px solid var(--border); border-radius: var(--radius-s); color: var(--text-1); outline: none;" />
+        </div>
+        <div class="field">
+          <label>Email Body</label>
+          <textarea id="fpOutreachBody" style="width: 100%; height: 14rem; background: var(--panel-sunk); border: 1px solid var(--border); border-radius: var(--radius-s); color: var(--text-1); font-family: var(--sans); font-size: 0.82rem; line-height: 1.5; padding: 0.8rem; resize: vertical; outline: none;" placeholder="Enter email body...">${bodyText}</textarea>
+        </div>
+        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+          <button class="btn btn-primary" id="saveDraftBtn" data-msg-id="${latestMessage.id}" style="flex:1; justify-content:center;">Save Draft</button>
+          <button class="btn btn-outline" id="regenerateDraftBtn" data-contact-id="${c.id}" data-tone="${c.tone_note || ''}" style="flex:1; justify-content:center;">Regenerate Draft</button>
+        </div>
+      </div>
+    `;
+  } else {
+    return `
+      <div class="card glass" style="padding:3rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2rem; margin-bottom:1.5rem;">
+        <div class="glass-edge"></div>
+        <div style="color:var(--text-3); font-size:0.9rem; text-align:center;">
+          No active outreach draft exists for this contact.
+        </div>
+        <button class="btn btn-primary" id="regenerateDraftBtn" data-contact-id="${c.id}" data-tone="${c.tone_note || ''}" style="justify-content:center;">
+          Generate Email Draft
+        </button>
+      </div>
+    `;
+  }
+}
+
+function renderFpHistory(c) {
   const badgeColors = {
     booked: 'background:var(--accent-dim); color:var(--accent);',
     replied: 'background:var(--accent-dim); color:var(--accent);',
@@ -508,22 +635,28 @@ function renderFpMessages(c){
     no_response: 'background:var(--border-soft); color:var(--text-3);',
     rejected: 'background:var(--rust-dim); color:var(--rust);'
   };
-  const badgeLabels = {
-    booked: 'Booked',
-    replied: 'Replied',
-    opened: 'Opened',
-    no_response: 'No response',
-    rejected: 'Rejected'
-  };
+
+  const outcomeOptions = [
+    { value: 'no_response', label: 'No response' },
+    { value: 'opened', label: 'Opened' },
+    { value: 'replied', label: 'Replied' },
+    { value: 'booked', label: 'Booked' },
+    { value: 'rejected', label: 'Rejected' }
+  ];
 
   const msgList = (c.messages || []).map(msg => {
     const icon = ICONS.envelope;
     const outcomeVal = msg.outcome || 'no_response';
     const badgeStyle = badgeColors[outcomeVal] || badgeColors.no_response;
-    const badgeLabel = badgeLabels[outcomeVal] || outcomeVal;
     const subject = msg.subject || msg.subject_line || 'No Subject';
     const dateStr = msg.created_at ? new Date(msg.created_at).toLocaleDateString() : 'Just now';
     const outcomeSyncedStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : 'Just now';
+
+    const selectOptions = outcomeOptions.map(opt => `
+      <option value="${opt.value}" ${outcomeVal === opt.value ? 'selected' : ''} style="background:var(--panel-raised); color:var(--text-1);">
+        ${opt.label}
+      </option>
+    `).join('');
     
     return `
       <div class="card glass msg-row" style="margin-bottom:0.7rem; padding:0.85rem;" data-msg-id="${msg.id}">
@@ -534,7 +667,9 @@ function renderFpMessages(c){
             <span style="font-weight:500; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${subject}</span>
           </div>
           <div style="display:flex; align-items:center; gap:0.65rem; flex-shrink:0;">
-            <span style="border-radius:99px; padding:0.15rem 0.5rem; font-size:0.65rem; ${badgeStyle}">${badgeLabel}</span>
+            <select class="msg-outcome-select" onclick="event.stopPropagation()" data-msg-id="${msg.id}" style="border:none; outline:none; cursor:pointer; border-radius:99px; padding:0.15rem 0.5rem; font-size:0.65rem; ${badgeStyle}">
+              ${selectOptions}
+            </select>
             <span style="font-size:0.68rem; color:var(--text-3); font-family:var(--mono);">${dateStr}</span>
           </div>
         </div>
@@ -554,38 +689,24 @@ function renderFpMessages(c){
   }).join('');
 
   return `
-    <div class="card glass" style="padding:1.2rem; margin-bottom:1.2rem;">
-      <div class="glass-edge"></div>
-      <button class="btn btn-primary" id="genFpDraftBtn" data-draft-for="${c.name}" style="width:100%; justify-content:center;">
-        Generate new draft
-      </button>
-    </div>
-    
-    <div class="divider-label"><span>Message History</span><div class="rule"></div></div>
-    <div class="msg-history-list">
-      ${msgList || '<div class="cell-muted" style="text-align:center; padding:2rem;">No messages sent.</div>'}
-    </div>
-  `;
-}
+    <div style="display:flex; flex-direction:column; gap:1.5rem; margin-bottom:1.5rem;">
+      <div class="card glass" style="padding:1.4rem;">
+        <div class="glass-edge"></div>
+        <div class="card-title" style="margin-bottom:1.2rem;">Message Logs & Outcomes</div>
+        <div class="msg-history-list">
+          ${msgList || '<div class="cell-muted" style="text-align:center; padding:2rem;">No messages sent.</div>'}
+        </div>
+      </div>
 
-function renderFpActivity(c){
-  return `
-    <div class="timeline" style="margin-left:1.5rem;">
-      <div class="tl-item mint"><div><div class="tl-text">Profile loaded from DB</div><div class="tl-date">Just now</div></div></div>
-      <div class="tl-item mint"><div><div class="tl-text">AI status synced: ${c.ai_status}</div><div class="tl-date">Status update</div></div></div>
-      <div class="tl-item"><div><div class="tl-text">Registered as active ${c.type || 'buyer'} stage: ${c.stage || 'New Lead'}</div><div class="tl-date">Created</div></div></div>
-    </div>
-  `;
-}
-
-function renderFpSource(c){
-  return `
-    <div class="card glass" style="padding:3rem; display:flex; align-items:center; justify-content:center;">
-      <div class="glass-edge"></div>
-      <button class="btn btn-outline" id="inspectFpSourceBtn" data-source-for="${c.name}" style="display:inline-flex; align-items:center; gap:0.5rem;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px; height:14px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-        Inspect source
-      </button>
+      <div class="card glass" style="padding:1.4rem;">
+        <div class="glass-edge"></div>
+        <div class="card-title" style="margin-bottom:1.2rem;">Activity Timeline</div>
+        <div class="timeline" style="margin-left:1.5rem;">
+          <div class="tl-item mint"><div><div class="tl-text">Profile loaded from DB</div><div class="tl-date">Just now</div></div></div>
+          <div class="tl-item mint"><div><div class="tl-text">AI status synced: ${c.ai_status}</div><div class="tl-date">Status update</div></div></div>
+          <div class="tl-item"><div><div class="tl-text">Registered as active ${c.type || 'buyer'} stage: ${mapStage(c.stage || 'New Lead')}</div><div class="tl-date">Created</div></div></div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1235,20 +1356,98 @@ document.addEventListener('click', async (e)=>{
     document.querySelectorAll('.fp-panel').forEach(panel => panel.classList.add('hidden'));
     document.getElementById('fp-'+tabName).classList.remove('hidden');
 
-    if (tabName === 'messages' && currentContactId) {
-      try {
-        const res = await fetch(`/api/contacts/${currentContactId}/messages`);
-        const msgs = await res.json();
-        const contact = CONTACTS.find(x => x.id === currentContactId);
-        if(contact) contact.messages = msgs.messages || msgs;
-        
-        const messagesPanel = document.getElementById('fp-messages');
-        if (messagesPanel && contact) {
-          messagesPanel.innerHTML = renderFpMessages(contact);
-        }
-      } catch (err) {
-        console.error('Failed to fetch messages for tab:', err);
+    const contact = CONTACTS.find(x => x.id === currentContactId);
+    if (contact) {
+      if (tabName === 'profile') {
+        document.getElementById('fp-profile').innerHTML = renderFpProfile(contact);
+      } else if (tabName === 'outreach') {
+        document.getElementById('fp-outreach').innerHTML = renderFpOutreach(contact);
+      } else if (tabName === 'history') {
+        document.getElementById('fp-history').innerHTML = renderFpHistory(contact);
       }
+    }
+    return;
+  }
+
+  const saveRawDumpBtn = e.target.closest('#saveRawDumpBtn');
+  if(saveRawDumpBtn){
+    const contactId = saveRawDumpBtn.dataset.contactId;
+    const value = document.getElementById('fpRawDumpTextarea').value;
+    toast('processing', 'Saving dump...');
+    try {
+      await api('PATCH', `/api/contacts/${contactId}/raw_dump`, { raw_dump: value });
+      toast('ready', 'Raw research dump updated.');
+      await loadContacts();
+      const contact = CONTACTS.find(x => x.id === currentContactId);
+      if (contact) {
+        document.getElementById('fp-profile').innerHTML = renderFpProfile(contact);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('attn', 'Failed to save raw dump.');
+    }
+    return;
+  }
+
+  const reextractAiBtn = e.target.closest('#reextractAiBtn');
+  if(reextractAiBtn){
+    const contactId = reextractAiBtn.dataset.contactId;
+    toast('processing', 'Triggering AI extraction...');
+    try {
+      await api('POST', `/api/contacts/${contactId}/extract`);
+      toast('ready', 'Re-extraction started in background.');
+      await loadContacts();
+      const contact = CONTACTS.find(x => x.id === currentContactId);
+      if (contact) {
+        document.getElementById('fp-profile').innerHTML = renderFpProfile(contact);
+        document.getElementById('fpStatus').innerHTML = aiStatusBadge(contact.ai_status);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('attn', 'Failed to trigger re-extraction.');
+    }
+    return;
+  }
+
+  const saveDraftBtn = e.target.closest('#saveDraftBtn');
+  if(saveDraftBtn){
+    const msgId = saveDraftBtn.dataset.msgId;
+    const subject_line = document.getElementById('fpOutreachSubject').value;
+    const body = document.getElementById('fpOutreachBody').value;
+    toast('processing', 'Saving draft...');
+    try {
+      await api('PATCH', `/api/messages/${msgId}`, { subject_line, body });
+      toast('ready', 'Message draft saved.');
+      await loadContacts();
+      const contact = CONTACTS.find(x => x.id === currentContactId);
+      if (contact) {
+        document.getElementById('fp-outreach').innerHTML = renderFpOutreach(contact);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('attn', 'Failed to save draft.');
+    }
+    return;
+  }
+
+  const regenerateDraftBtn = e.target.closest('#regenerateDraftBtn');
+  if(regenerateDraftBtn){
+    const contactId = regenerateDraftBtn.dataset.contactId;
+    const contact = CONTACTS.find(x => x.id === contactId);
+    const tone = contact?.tone_note || 'curiosity';
+    toast('processing', 'Regenerating draft...');
+    try {
+      await api('POST', `/api/contacts/${contactId}/draft`, { tone });
+      toast('ready', 'New draft generated.');
+      await loadContacts();
+      const updatedContact = CONTACTS.find(x => x.id === contactId);
+      if (updatedContact) {
+        document.getElementById('fp-outreach').innerHTML = renderFpOutreach(updatedContact);
+        document.getElementById('fpStatus').innerHTML = aiStatusBadge(updatedContact.ai_status);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('attn', 'Failed to regenerate draft.');
     }
     return;
   }
@@ -1269,55 +1468,6 @@ document.addEventListener('click', async (e)=>{
     setTimeout(() => {
       toast('ready', 'Outcome confirmed — no change.');
     }, 800);
-    return;
-  }
-
-  const genFpDraftBtn = e.target.closest('#genFpDraftBtn');
-  if(genFpDraftBtn){
-    const contact = CONTACTS.find(x => x.id === currentContactId);
-    const tone = contact?.tone_note || AVAILABLE_TONES[0] || 'curiosity';
-
-    // Immediately show loading state
-    openModal(`
-      <div class="status processing"><span class="sdot"></span>Generating…</div>
-    `);
-
-    try {
-      const res = await fetch(`/api/contacts/${currentContactId}/draft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tone })
-      });
-      const draft = await res.json();
-
-      if(draft.success) {
-        // Update local contact messages
-        await loadContactMessages(currentContactId);
-        // Render the draft in the existing email modal format
-        renderEmailModal(contact.name, draft.subject, draft.body);
-
-        // Step 7: Update AI status and contacts list
-        const updated = await fetch(`/api/contacts/${currentContactId}`).then(r => r.json());
-        const updatedContact = updated.contact || updated;
-        const idx = CONTACTS.findIndex(x => x.id === currentContactId);
-        if(idx !== -1) CONTACTS[idx] = updatedContact;
-        renderContacts();
-        
-        // Also update full profile panel if open
-        const fullProfileView = document.getElementById('view-contact-full');
-        if (fullProfileView && !fullProfileView.classList.contains('hidden')) {
-          document.getElementById('fp-messages').innerHTML = renderFpMessages(updatedContact);
-          document.getElementById('fpStatus').innerHTML = aiStatusBadge(updatedContact.ai_status);
-        }
-      } else {
-        toast('attn', 'Draft generation failed — check AI pipeline.');
-        closeModal();
-      }
-    } catch (err) {
-      console.error(err);
-      toast('attn', 'Draft generation failed — check AI pipeline.');
-      closeModal();
-    }
     return;
   }
 
@@ -1399,6 +1549,33 @@ document.addEventListener('change', async (e) => {
         toast('attn', 'Failed to save tone note.');
       }
     }
+    return;
+  }
+
+  const outcomeSelect = e.target.closest('.msg-outcome-select');
+  if (outcomeSelect) {
+    const msgId = outcomeSelect.dataset.msgId;
+    const value = outcomeSelect.value;
+    toast('processing', 'Saving outcome...');
+    try {
+      await api('PATCH', `/api/messages/${msgId}/outcome`, { outcome: value });
+      toast('ready', 'Outcome updated.');
+      
+      const badgeColors = {
+        booked: 'background:var(--accent-dim); color:var(--accent);',
+        replied: 'background:var(--accent-dim); color:var(--accent);',
+        opened: 'background:var(--amber-dim); color:var(--amber);',
+        no_response: 'background:var(--border-soft); color:var(--text-3);',
+        rejected: 'background:var(--rust-dim); color:var(--rust);'
+      };
+      outcomeSelect.style = `border:none; outline:none; cursor:pointer; border-radius:99px; padding:0.15rem 0.5rem; font-size:0.65rem; ${badgeColors[value] || badgeColors.no_response}`;
+      
+      await loadContacts();
+    } catch (err) {
+      console.error(err);
+      toast('attn', 'Failed to update outcome.');
+    }
+    return;
   }
 }, false);
 

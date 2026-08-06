@@ -12,6 +12,9 @@ export default function Contacts({
     return contactsList.filter(c => {
       if (activeSegment === 'all') return true;
       if (activeSegment === 'stalled') return c.score < 50;
+      if (activeSegment === 'replied') {
+        return c.messages && c.messages.some(m => m.outcome === 'replied');
+      }
       return c.type === activeSegment;
     });
   };
@@ -44,10 +47,28 @@ export default function Contacts({
                     <Badge status={contact.ai_status || 'NOT_STARTED'} />
                   </td>
                   <td className="cell-primary">{contact.name}</td>
-                  <td className="cell-muted" style={{ textTransform: 'capitalize' }}>
-                    {contact.type}
+                  <td className="cell-muted">
+                    {(() => {
+                      const mapping = {
+                        'buyer': 'Cold',
+                        'seller': 'Warm',
+                        'nurture': 'Active'
+                      };
+                      return mapping[contact.type] || contact.type || 'Cold';
+                    })()}
                   </td>
-                  <td>{contact.stage}</td>
+                  <td>
+                    {(() => {
+                      const mapping = {
+                        'New Lead': 'Not Contacted',
+                        'Qualified': 'Research Done',
+                        'Showing': 'Drafted',
+                        'Offer': 'Sent',
+                        'Closed': 'Replied / Booked'
+                      };
+                      return mapping[contact.stage] || contact.stage || 'Not Contacted';
+                    })()}
+                  </td>
                   <td className="cell-muted">{contact.last}</td>
                   <td style={{ textAlign: 'right' }} className="cell-muted">
                     {contact.score}

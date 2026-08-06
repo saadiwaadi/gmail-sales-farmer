@@ -6,6 +6,7 @@ import { MoreHorizontalIcon, FilterIcon, BoltIcon, PulseIcon } from '../componen
 import { addToast } from '../hooks/useToast';
 
 export default function Dashboard({
+  contactsList = [],
   activityData = [],
   signalsData = [],
   onOpenContact,
@@ -62,191 +63,45 @@ export default function Dashboard({
     addToast('ready', 'Loading all 41 signals from the last 7 days.');
   };
 
+  const totalContacts = contactsList ? contactsList.length : 0;
+  const aiReadyContacts = contactsList ? contactsList.filter(c => c.ai_status === 'READY').length : 0;
+
+  // Calculate Replied this week (outcome === 'replied' in last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const repliedThisWeek = contactsList
+    ? contactsList.reduce((count, c) => {
+        const replies = (c.messages || []).filter(
+          m => m.outcome === 'replied' && new Date(m.created_at || m.date) >= sevenDaysAgo
+        );
+        return count + replies.length;
+      }, 0)
+    : 0;
+
   return (
     <div className="view" id="view-dashboard">
-      <div className="dash-grid">
-        
-        {/* LEFT: Portfolio */}
-        <div className="col">
-          <Card>
-            <div className="card-head">
-              <div className="card-title">Portfolio</div>
-              <IconButton onClick={handlePortfolioOptions}>
-                <MoreHorizontalIcon />
-              </IconButton>
-            </div>
+      {/* Dynamic Stat Cards */}
+      <div className="stat-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.2rem', marginBottom: '1.5rem' }}>
+        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>Total Contacts</div>
+          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--accent)' }}>{totalContacts}</div>
+          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Contacts in pipeline</div>
+        </Card>
+        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>AI Ready</div>
+          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--amber)' }}>{aiReadyContacts}</div>
+          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Extracted research profiles</div>
+        </Card>
+        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>Replied This Week</div>
+          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--accent)' }}>{repliedThisWeek}</div>
+          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Outreach replies received</div>
+        </Card>
+      </div>
 
-            <div className="net-worth">
-              <div className="label">Net pipeline value</div>
-              <div className="value">$2,840,600 <span className="delta">↑ 6.2%</span></div>
-            </div>
-
-            <div className="ledger-rule"></div>
-
-            <div className="tree" id="portfolioTree">
-              
-              {/* Active Listings */}
-              <div
-                className={`tree-row ${treeOpen.active ? 'open' : ''}`}
-                onClick={() => toggleTree('active')}
-              >
-                <div className="tree-row-left">
-                  <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  <span>Active Listings </span>
-                  <span className="cell-muted">(12)</span>
-                </div>
-                <div className="tree-row-right">$1,240,000</div>
-              </div>
-              {treeOpen.active && (
-                <div className="tree-sub">
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '412 Ashwood Lane — 3 new views this week.')}>
-                    412 Ashwood Ln <span>$620,000</span>
-                  </div>
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '118 Birchgate Rd — showing booked for Thu.')}>
-                    118 Birchgate Rd <span>$340,000</span>
-                  </div>
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '9 Copperfield Ct — price reviewed Monday.')}>
-                    9 Copperfield Ct <span>$280,000</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Under Contract */}
-              <div
-                className={`tree-row ${treeOpen.contract ? 'open' : ''}`}
-                onClick={() => toggleTree('contract')}
-              >
-                <div className="tree-row-left">
-                  <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  <span>Under Contract </span>
-                  <span className="cell-muted">(4)</span>
-                </div>
-                <div className="tree-row-right">$860,000</div>
-              </div>
-              {treeOpen.contract && (
-                <div className="tree-sub">
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '221 Maple Grove — inspection cleared.')}>
-                    221 Maple Grove <span>$410,000</span>
-                  </div>
-                  <div className="tree-sub-row" onClick={() => addToast('processing', '31 Harrow St — appraisal pending.')}>
-                    31 Harrow St <span>$450,000</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Closed */}
-              <div
-                className={`tree-row ${treeOpen.closed ? 'open' : ''}`}
-                onClick={() => toggleTree('closed')}
-              >
-                <div className="tree-row-left">
-                  <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  <span>Closed, this quarter </span>
-                  <span className="cell-muted">(7)</span>
-                </div>
-                <div className="tree-row-right">$610,600</div>
-              </div>
-              {treeOpen.closed && (
-                <div className="tree-sub">
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '54 Pinehollow — closed at asking.')}>
-                    54 Pinehollow <span>$298,000</span>
-                  </div>
-                  <div className="tree-sub-row" onClick={() => addToast('ready', '8 Larkspur Way — closed, 3% over ask.')}>
-                    8 Larkspur Way <span>$312,600</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Nurture */}
-              <div
-                className="tree-row"
-                style={{ cursor: 'pointer' }}
-                onClick={() => addToast('ready', '23 contacts sit in nurture — none touched in 30+ days.')}
-              >
-                <div className="tree-row-left">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ visibility: 'hidden' }}>
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  <span>Nurture </span>
-                  <span className="cell-muted">(23 contacts)</span>
-                </div>
-                <div className="tree-row-right">—</div>
-              </div>
-
-            </div>
-
-            <button className="see-all" id="addListingBtn" onClick={handleAddListing}>+ Add listing</button>
-          </Card>
-        </div>
-
-        {/* CENTER: This Week & Recent Activity */}
-        <div className="col">
-          <Card>
-            <div className="card-head">
-              <div className="card-title">This week</div>
-              <IconButton onClick={handleFiltersToast}>
-                <FilterIcon />
-              </IconButton>
-            </div>
-
-            <div className="stat-trio">
-              <div className="stat"><div className="n">8</div><div className="l">Follow-ups due</div></div>
-              <div className="stat"><div className="n">5</div><div className="l">Showings booked</div></div>
-              <div className="stat"><div className="n">2</div><div className="l">Offers pending</div></div>
-            </div>
-
-            <div className="seg-bar">
-              <div className="seg" style={{ width: '52%', background: 'var(--accent)' }}></div>
-              <div className="seg" style={{ width: '28%', background: 'var(--amber)' }}></div>
-              <div className="seg" style={{ width: '20%', background: 'var(--panel-raised)' }}></div>
-            </div>
-            <div className="bar-legend">
-              <div className="legend-item">
-                <span className="legend-swatch" style={{ background: 'var(--accent)' }}></span>Client-facing
-              </div>
-              <div className="legend-item">
-                <span className="legend-swatch" style={{ background: 'var(--amber)' }}></span>Admin
-              </div>
-              <div className="legend-item">
-                <span className="legend-swatch" style={{ background: 'var(--panel-raised)', border: '1px solid var(--border)' }}></span>Travel
-              </div>
-            </div>
-
-            <div className="ledger-rule"></div>
-
-            <div className="mini-bar-row" style={{ cursor: 'pointer' }} onClick={handleOverdueToast}>
-              <div className="mini-bar-head">
-                <div className="k">
-                  <span className="status attn"><span className="sdot"></span></span>Overdue
-                </div>
-                <div>3 of 8</div>
-              </div>
-              <div className="mini-bar">
-                <div className="fill rust glow-rust" style={{ width: '38%' }}></div>
-              </div>
-              <div className="mini-bar-foot"><span>3 contacts</span><span>due already</span></div>
-            </div>
-            
-            <div className="mini-bar-row" style={{ cursor: 'pointer' }} onClick={handleDueTodayToast}>
-              <div className="mini-bar-head">
-                <div className="k">
-                  <span className="status ready"><span className="sdot"></span></span>Due today
-                </div>
-                <div>5 of 8</div>
-              </div>
-              <div className="mini-bar">
-                <div className="fill mint" style={{ width: '62%' }}></div>
-              </div>
-              <div className="mini-bar-foot"><span>5 contacts</span><span>on schedule</span></div>
-            </div>
-          </Card>
-
+      <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        {/* LEFT COLUMN: Recent Activity */}
+        <div className="col" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card>
             <div className="card-head">
               <div className="card-title">Recent activity</div>
@@ -304,8 +159,8 @@ export default function Dashboard({
           </Card>
         </div>
 
-        {/* RIGHT: Latest signals & Market update */}
-        <div className="col">
+        {/* RIGHT COLUMN: Signals & CTA */}
+        <div className="col" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card>
             <div className="card-head">
               <div className="card-title">Latest signals</div>
@@ -369,7 +224,6 @@ export default function Dashboard({
             </Button>
           </div>
         </div>
-
       </div>
     </div>
   );

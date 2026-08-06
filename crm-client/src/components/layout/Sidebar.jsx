@@ -30,7 +30,7 @@ export default function Sidebar({
         {!collapsed && (
           <div>
             <div className="brand-name">Ledger</div>
-            <div className="brand-sub">Field &amp; Book</div>
+            <div className="brand-sub">Outreach Engine</div>
           </div>
         )}
         <button

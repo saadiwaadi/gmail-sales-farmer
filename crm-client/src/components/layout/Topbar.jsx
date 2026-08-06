@@ -19,9 +19,14 @@ export default function Topbar({
   onSearchQueryChange,
   onShowNotifications,
   onOpenImport,
-  onOpenNewDeal
+  onOpenNewDeal,
+  contactsCount = 0
 }) {
   let [title, sub] = TITLES[currentView] || ["Dashboard", ""];
+
+  if (currentView === 'contacts') {
+    sub = `${contactsCount} contacts in pipeline`;
+  }
 
   if (currentView === 'contact-full' && contactNameForFullProfile) {
     sub = `Details, message logs, and activity timeline for ${contactNameForFullProfile}`;

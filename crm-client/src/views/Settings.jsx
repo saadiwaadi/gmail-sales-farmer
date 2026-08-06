@@ -36,7 +36,7 @@ export default function Settings({ densityCompact, onDensityToggle }) {
             />
           </div>
           <div className="field">
-            <label>Brokerage</label>
+            <label>Company / Studio</label>
             <input
               value={profile.brokerage}
               onChange={(e) => handleProfileChange('brokerage', e.target.value)}

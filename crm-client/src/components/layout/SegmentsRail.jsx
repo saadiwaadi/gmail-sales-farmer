@@ -29,19 +29,25 @@ export default function SegmentsRail({
           className={`nav-item segment-item ${activeSegment === 'buyer' ? 'active' : ''}`}
           onClick={() => onSegmentChange('buyer')}
         >
-          <span>Buyers</span>
+          <span>Cold</span>
         </button>
         <button
           className={`nav-item segment-item ${activeSegment === 'seller' ? 'active' : ''}`}
           onClick={() => onSegmentChange('seller')}
         >
-          <span>Sellers</span>
+          <span>Warm</span>
         </button>
         <button
           className={`nav-item segment-item ${activeSegment === 'nurture' ? 'active' : ''}`}
           onClick={() => onSegmentChange('nurture')}
         >
-          <span>Nurture</span>
+          <span>Active</span>
+        </button>
+        <button
+          className={`nav-item segment-item ${activeSegment === 'replied' ? 'active' : ''}`}
+          onClick={() => onSegmentChange('replied')}
+        >
+          <span>Replied</span>
         </button>
         <button
           className={`nav-item segment-item ${activeSegment === 'stalled' ? 'active' : ''}`}

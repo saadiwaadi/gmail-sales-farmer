@@ -159,7 +159,16 @@ export default function App() {
         id: m.id,
         name: c.name,
         date: m.created_at || 'recent',
-        change: `${c.stage || 'Contact'} — ${m.tone_used || 'outreach'}`,
+        change: `${(() => {
+          const mapping = {
+            'New Lead': 'Not Contacted',
+            'Qualified': 'Research Done',
+            'Showing': 'Drafted',
+            'Offer': 'Sent',
+            'Closed': 'Replied / Booked'
+          };
+          return mapping[c.stage] || c.stage || 'Not Contacted';
+        })()} — ${m.tone_used || 'outreach'}`,
         value: '—',
         pos: m.outcome === 'replied' || m.outcome === 'booked'
       })))
@@ -180,14 +189,24 @@ export default function App() {
 
     // 3. Derive Kanban
     const board = {
-      "New Lead": [],
-      "Qualified": [],
-      "Showing": [],
-      "Offer": [],
-      "Closed": []
+      "Not Contacted": [],
+      "Research Done": [],
+      "Drafted": [],
+      "Sent": [],
+      "Replied / Booked": []
+    };
+    const mapStage = (s) => {
+      const mapping = {
+        'New Lead': 'Not Contacted',
+        'Qualified': 'Research Done',
+        'Showing': 'Drafted',
+        'Offer': 'Sent',
+        'Closed': 'Replied / Booked'
+      };
+      return mapping[s] || s || 'Not Contacted';
     };
     contacts.forEach(c => {
-      let stage = c.stage || 'New Lead';
+      let stage = mapStage(c.stage);
       if (!board[stage]) {
         board[stage] = [];
       }
@@ -288,6 +307,62 @@ export default function App() {
     setTimeout(() => {
       addToast('ready', 'Outcome confirmed — no change.');
     }, 800);
+  };
+
+  const handleSaveRawDump = async (contactId, raw_dump) => {
+    try {
+      await api('PATCH', `/api/contacts/${contactId}/raw_dump`, { raw_dump });
+      addToast('ready', 'Raw research dump updated.');
+      await loadContacts();
+    } catch (err) {
+      console.error('Error saving raw dump:', err);
+      addToast('attn', 'Failed to save raw dump.');
+    }
+  };
+
+  const handleReextractProfile = async (contactId) => {
+    try {
+      await api('POST', `/api/contacts/${contactId}/extract`);
+      addToast('ready', 'Re-extraction triggered via AI bot.');
+      await loadContacts();
+    } catch (err) {
+      console.error('Error re-extracting profile:', err);
+      addToast('attn', 'Failed to trigger re-extraction.');
+    }
+  };
+
+  const handleSaveMessageDraft = async (msgId, subject_line, body) => {
+    try {
+      await api('PATCH', `/api/messages/${msgId}`, { subject_line, body });
+      addToast('ready', 'Message draft saved.');
+      await loadContacts();
+    } catch (err) {
+      console.error('Error saving message:', err);
+      addToast('attn', 'Failed to save message draft.');
+    }
+  };
+
+  const handleUpdateMessageOutcome = async (msgId, outcome) => {
+    try {
+      await api('PATCH', `/api/messages/${msgId}/outcome`, { outcome });
+      addToast('ready', 'Outcome updated.');
+      await loadContacts();
+    } catch (err) {
+      console.error('Error updating outcome:', err);
+      addToast('attn', 'Failed to update outcome.');
+    }
+  };
+
+  const handleRegenerateDraftDirect = async (contactId, tone) => {
+    addToast('processing', 'Regenerating draft...');
+    try {
+      await api('POST', `/api/contacts/${contactId}/draft`, { tone: tone || 'curiosity' });
+      addToast('ready', 'New draft generated.');
+      await loadContacts();
+    } catch (err) {
+      console.error('Draft generation error:', err);
+      addToast('attn', 'Failed to regenerate draft.');
+    }
   };
 
   const handleInspectSource = (contactName) => {
@@ -612,6 +687,7 @@ export default function App() {
              onShowNotifications={() => setSlideover({ show: true, type: 'notification', data: null })}
              onOpenImport={() => setModal({ show: true, type: 'import', data: null })}
              onOpenNewDeal={() => setModal({ show: true, type: 'new-deal', data: 'New Lead' })}
+             contactsCount={contacts.length}
           />
 
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -629,6 +705,7 @@ export default function App() {
               
               {currentView === 'dashboard' && (
                 <Dashboard
+                  contactsList={contacts}
                   activityData={getSearchFilteredActivity()}
                   signalsData={getSearchFilteredSignals()}
                   onOpenContact={handleOpenContact}
@@ -678,6 +755,11 @@ export default function App() {
                   onResyncMessage={handleResyncMessage}
                   onInspectSource={(name) => setModal({ show: true, type: 'inspect-source', data: name })}
                   availableTones={availableTones}
+                  onSaveRawDump={handleSaveRawDump}
+                  onReextractProfile={handleReextractProfile}
+                  onSaveMessageDraft={handleSaveMessageDraft}
+                  onUpdateMessageOutcome={handleUpdateMessageOutcome}
+                  onRegenerateDraftDirect={handleRegenerateDraftDirect}
                 />
               )}
 

@@ -4,7 +4,7 @@ import IconButton from '../components/ui/IconButton';
 import { PlusIcon } from '../components/ui/icons';
 import { addToast } from '../hooks/useToast';
 
-const STAGES = ["New Lead", "Qualified", "Showing", "Offer", "Closed"];
+const STAGES = ["Not Contacted", "Research Done", "Drafted", "Sent", "Replied / Booked"];
 
 export default function Pipeline({
   kanbanData = {},
@@ -25,6 +25,10 @@ export default function Pipeline({
       
       if (activeSegment === 'stalled') {
         return contact.score < 50;
+      }
+
+      if (activeSegment === 'replied') {
+        return contact.messages && contact.messages.some(m => m.outcome === 'replied');
       }
       
       return contact.type === activeSegment;

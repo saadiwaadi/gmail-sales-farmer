@@ -19,7 +19,7 @@ const BADGE_LABELS = {
   rejected: 'Rejected'
 };
 
-export default function MessageRow({ msg, onResync }) {
+export default function MessageRow({ msg, onResync, onOutcomeChange }) {
   const [expanded, setExpanded] = useState(false);
 
   const getIcon = (channel) => {
@@ -28,7 +28,6 @@ export default function MessageRow({ msg, onResync }) {
   };
 
   const badgeStyle = BADGE_STYLES[msg.outcome] || BADGE_STYLES.no_response;
-  const badgeLabel = BADGE_LABELS[msg.outcome] || msg.outcome;
 
   return (
     <Card glass={true} glow={false} className="msg-row" style={{ marginBottom: '0.7rem', padding: '0.85rem' }}>
@@ -46,9 +45,36 @@ export default function MessageRow({ msg, onResync }) {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
-          <span style={{ borderRadius: '99px', padding: '0.15rem 0.5rem', fontSize: '0.65rem', ...badgeStyle }}>
-            {badgeLabel}
-          </span>
+          {onOutcomeChange ? (
+            <select
+              value={msg.outcome || 'no_response'}
+              onChange={(e) => onOutcomeChange(msg.id, e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                borderRadius: '99px',
+                padding: '0.15rem 0.5rem',
+                fontSize: '0.65rem',
+                border: 'none',
+                background: badgeStyle.background,
+                color: badgeStyle.color,
+                fontWeight: 500,
+                cursor: 'pointer',
+                outline: 'none',
+                fontFamily: 'inherit',
+                textAlign: 'center'
+              }}
+            >
+              <option value="no_response" style={{ background: 'var(--panel-raised)', color: 'var(--text-1)' }}>No Response</option>
+              <option value="opened" style={{ background: 'var(--panel-raised)', color: 'var(--text-1)' }}>Opened</option>
+              <option value="replied" style={{ background: 'var(--panel-raised)', color: 'var(--text-1)' }}>Replied</option>
+              <option value="booked" style={{ background: 'var(--panel-raised)', color: 'var(--text-1)' }}>Booked</option>
+              <option value="rejected" style={{ background: 'var(--panel-raised)', color: 'var(--text-1)' }}>Rejected</option>
+            </select>
+          ) : (
+            <span style={{ borderRadius: '99px', padding: '0.15rem 0.5rem', fontSize: '0.65rem', ...badgeStyle }}>
+              {BADGE_LABELS[msg.outcome] || msg.outcome}
+            </span>
+          )}
           <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
             {msg.date}
           </span>
