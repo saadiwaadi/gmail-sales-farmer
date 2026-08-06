@@ -44,22 +44,14 @@
   html,body{ height:100%; }
   body{
     margin:0;
-    background:var(--bg);
+    background:#000000;
     color:var(--text-1);
     font-family:var(--sans);
     font-size:0.93rem;
     -webkit-font-smoothing:antialiased;
     position:relative;
   }
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    pointer-events:none;
-    opacity:0.5;
-    mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
-    z-index:1;
-  }
+  /* body::before removed to keep underlying background flat plain black */
 
   a{ color:inherit; }
   button{ font-family:inherit; }
@@ -76,7 +68,7 @@
   }
 
   .sidebar{
-    background:var(--bg-raise);
+    background:#121212;
     border-right:1px solid var(--border-soft);
     display:flex;
     flex-direction:column;
@@ -144,6 +136,7 @@
   /* ---------- main ---------- */
   .main{ display:flex; flex-direction:column; min-width:0; }
   .topbar{
+    background:#121212;
     display:flex; align-items:center; justify-content:space-between;
     padding:1.1rem 2rem;
     border-bottom:1px solid var(--border-soft);
@@ -215,7 +208,7 @@
   .col{ display:flex; flex-direction:column; gap:1.1rem; }
 
   .card{
-    background:var(--panel);
+    background: linear-gradient(to top left, rgba(143, 227, 176, 0.08), transparent), #1d1d1d;
     border:1px solid var(--border-soft);
     border-radius:var(--radius-l);
     padding:1.15rem 1.15rem 1.3rem;
@@ -313,7 +306,7 @@
 
   /* ---------- cta card ---------- */
   .cta-card{
-    background:linear-gradient(165deg, var(--panel-raised), var(--panel));
+    background: linear-gradient(to top left, rgba(143, 227, 176, 0.08), transparent), #1d1d1d;
     border:1px solid var(--border-soft);
     border-radius:var(--radius-l);
     padding:1.2rem;
@@ -335,7 +328,7 @@
   .kcol-head{ display:flex; justify-content:space-between; align-items:baseline; padding:0 0.15rem; }
   .kcol-title{ font-size:0.76rem; font-weight:500; }
   .kcol-value{ font-family:var(--mono); font-size:0.66rem; color:var(--text-3); }
-  .kcard{ background:var(--panel-raised); border:1px solid var(--border-soft); border-radius:var(--radius-m); padding:0.7rem; cursor:pointer; transition:transform 0.25s var(--ease), border-color 0.25s var(--ease); }
+  .kcard{ background: linear-gradient(to top left, rgba(143, 227, 176, 0.08), transparent), #1d1d1d; border:1px solid var(--border-soft); border-radius:var(--radius-m); padding:0.7rem; cursor:pointer; transition:transform 0.25s var(--ease), border-color 0.25s var(--ease); }
   .kcard:hover{ transform:translateY(-2px); border-color:var(--border); }
   .kcard-name{ font-size:0.78rem; margin-bottom:0.15rem; }
   .kcard-prop{ font-size:0.68rem; color:var(--text-3); margin-bottom:0.55rem; }
@@ -352,13 +345,13 @@
 
   /* ---------- reports ---------- */
   .stat-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.2rem; }
-  .stat-card{ background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-l); padding:1rem 1.1rem; }
+  .stat-card{ background: linear-gradient(to top left, rgba(143, 227, 176, 0.08), transparent), #1d1d1d; border:1px solid var(--border-soft); border-radius:var(--radius-l); padding:1rem 1.1rem; }
   .stat-card .l{ font-size:0.7rem; color:var(--text-3); margin-bottom:0.5rem; }
   .stat-card .n{ font-family:var(--mono); font-size:1.4rem; }
   .stat-card .d{ font-size:0.68rem; margin-top:0.35rem; color:var(--accent); }
   .stat-card .d.down{ color:var(--rust); }
 
-  .chart-card{ background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius-l); padding:1.3rem; }
+  .chart-card{ background: linear-gradient(to top left, rgba(143, 227, 176, 0.08), transparent), #1d1d1d; border:1px solid var(--border-soft); border-radius:var(--radius-l); padding:1.3rem; }
   .bars{ display:flex; align-items:flex-end; gap:0.9rem; height:11rem; margin-top:1.2rem; border-bottom:1px solid var(--border-soft); padding-bottom:0; }
   .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; cursor:pointer; }
   .bar-fill{ width:100%; max-width:2rem; background:var(--panel-raised); border:1px solid var(--border); border-radius:4px 4px 0 0; transition:background 0.25s var(--ease), border-color 0.25s var(--ease); }

@@ -11,6 +11,9 @@ from core.prompt_builder import build_prompt
 from providers.config import get_provider
 
 def get_db_path():
+    env_db = os.environ.get("DB_PATH")
+    if env_db:
+        return env_db
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(os.path.dirname(script_dir), "db", "outreach.db")
 

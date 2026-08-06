@@ -3,7 +3,8 @@ import sqlite3
 
 def run_migration():
     db_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(db_dir, "outreach.db")
+    env_db = os.environ.get("DB_PATH")
+    db_path = env_db if env_db else os.path.join(db_dir, "outreach.db")
     schema_path = os.path.join(db_dir, "schema.sql")
 
     if not os.path.exists(db_path):

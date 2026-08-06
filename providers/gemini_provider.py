@@ -19,6 +19,9 @@ class GeminiProvider(BaseProvider):
         self.model_name = "gemini-3.5-flash-lite"
 
     def _get_db_path(self):
+        env_db = os.environ.get("DB_PATH")
+        if env_db:
+            return env_db
         current_dir = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(os.path.dirname(current_dir), "db", "outreach.db")
 

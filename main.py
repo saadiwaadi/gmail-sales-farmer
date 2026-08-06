@@ -14,6 +14,9 @@ from scripts.draft_email import run_draft
 from core.memory_updater import MemoryUpdater
 
 def get_db_path():
+    env_db = os.environ.get("DB_PATH")
+    if env_db:
+        return env_db
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(script_dir, "db", "outreach.db")
 

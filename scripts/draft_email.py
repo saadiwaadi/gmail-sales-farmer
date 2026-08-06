@@ -18,7 +18,8 @@ from providers.config import get_provider
 def get_paths():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.dirname(script_dir)
-    db_path = os.path.join(project_dir, "db", "outreach.db")
+    env_db = os.environ.get("DB_PATH")
+    db_path = env_db if env_db else os.path.join(project_dir, "db", "outreach.db")
     emails_path = os.path.join(project_dir, "examples", "my_emails.json")
     return db_path, emails_path
 
@@ -58,7 +59,8 @@ def run_draft(client_id, tone):
 
     # Validate tone file availability
     db_path, emails_path = get_paths()
-    project_dir = os.path.dirname(os.path.dirname(db_path))
+    script_file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.dirname(script_file_dir)
     tones_dir = os.path.join(project_dir, "skills", "writing", "tones")
     
     available_tones = []

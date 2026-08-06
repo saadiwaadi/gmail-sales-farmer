@@ -1,0 +1,9 @@
+{
+  "name": "sales-crm-workspace",
+  "version": "1.0.0",
+  "description": "Ledger CRM & Bitlogic Integration Workspace",
+  "private": true,
+  "scripts": {
+    "dev": "node dev.js"
+  }
+}

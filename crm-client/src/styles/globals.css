@@ -1,0 +1,126 @@
+:root {
+  --bg: #000000;
+  --bg-raise: #1A1E1B;
+  --panel: #1B201D;
+  --panel-raised: #232924;
+  --panel-sunk: #101312;
+  --border: #2A322A;
+  --border-soft: rgba(241,239,231,0.07);
+  --text-1: #F1EFE7;
+  --text-2: #9BA39A;
+  --text-3: #616960;
+  --accent: #559A80;              /* brand green */
+  --accent-strong: #6DB699;       /* hover green */
+  --accent-deep: #3E7A63;         /* border/gradient depth */
+  --accent-dim: rgba(85,154,128,0.20);
+  --accent-text: #0B1512;
+  --amber: #E0B873;
+  --amber-dim: rgba(224,184,115,0.13);
+  --rust: #D98066;
+  --rust-dim: rgba(217,128,102,0.13);
+  --urgent: #E8593F;
+  --urgent-dim: rgba(232,89,63,0.14);
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 20px;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'Newsreader', serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --sidebar-w: 260px;
+}
+
+html.comfortable { font-size: 16px; }
+html { font-size: 14px; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #000;
+  color: var(--text-1);
+  font-family: var(--sans);
+  font-size: 0.93rem;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+a { color: inherit; }
+button { font-family: inherit; }
+
+::selection { background: var(--accent-dim); color: var(--text-1); }
+
+/* ---------- Liquid Glass System ---------- */
+.glass {
+  position: relative;
+  background: linear-gradient(155deg, rgba(29,35,28,0.72), rgba(23,28,22,0.68));
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid transparent;
+  border-image: linear-gradient(180deg, rgba(241,239,231,0.16), rgba(241,239,231,0.03)) 1;
+  isolation: isolate;
+}
+.glass::before {
+  /* specular highlight */
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 60% at 18% 0%, rgba(241,239,231,0.10), transparent 55%);
+  pointer-events: none;
+  animation: glass-drift 14s ease-in-out infinite alternate;
+}
+.glass::after {
+  /* chromatic edge */
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 1px 0 0 rgba(255,80,80,0.04), inset -1px 0 0 rgba(80,140,255,0.04);
+  pointer-events: none;
+}
+@keyframes glass-drift {
+  from { background-position: 0% 0%; }
+  to { background-position: 8% 4%; }
+}
+
+.glass-edge {
+  position: absolute; inset: 0; border-radius: inherit;
+  filter: url(#glass-distort);
+  opacity: 0.5;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* ---------- Global keyframe animations ---------- */
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(224,184,115,0.35); }
+  50% { opacity: 0.65; box-shadow: 0 0 0 4px rgba(224,184,115,0); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes lava-blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -15px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, -5px) scale(0.9);
+  }
+  100% {
+    transform: translate(15px, 10px) scale(1.05);
+  }
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }

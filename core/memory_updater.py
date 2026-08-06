@@ -9,8 +9,12 @@ from providers.config import get_provider
 class MemoryUpdater:
     def __init__(self, db_path=None):
         if db_path is None:
-            core_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(os.path.dirname(core_dir), "db", "outreach.db")
+            env_db = os.environ.get("DB_PATH")
+            if env_db:
+                db_path = env_db
+            else:
+                core_dir = os.path.dirname(os.path.abspath(__file__))
+                db_path = os.path.join(os.path.dirname(core_dir), "db", "outreach.db")
         self.db_path = db_path
         self.reader = MemoryReader(db_path=db_path)
 

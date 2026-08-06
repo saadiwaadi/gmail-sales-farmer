@@ -22,8 +22,12 @@ class BaseProvider(ABC):
         Logs metadata about the LLM call into the database.
         """
         try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(os.path.dirname(current_dir), "db", "outreach.db")
+            env_db = os.environ.get("DB_PATH")
+            if env_db:
+                db_path = env_db
+            else:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                db_path = os.path.join(os.path.dirname(current_dir), "db", "outreach.db")
             
             # Make sure we don't fail if DB isn't initialized yet
             if not os.path.exists(db_path):
