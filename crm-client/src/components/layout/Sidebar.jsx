@@ -4,16 +4,12 @@ import {
   TagIcon,
   UserIcon,
   SettingsIcon,
-  ChevronLeftIcon,
   PulseIcon
 } from '../ui/icons';
-import { addToast } from '../../hooks/useToast';
 
 export default function Sidebar({
   currentView,
   onViewChange,
-  collapsed,
-  onToggleCollapse,
   me,
   onLogout
 }) {
@@ -24,92 +20,70 @@ export default function Sidebar({
   };
 
   return (
-    <aside className={`sidebar-pill ${collapsed ? 'collapsed' : ''}`}>
-      <div className="brand">
-        <div className="brand-mark">L</div>
-        {!collapsed && (
-          <div>
-            <div className="brand-name">Ledger</div>
-            <div className="brand-sub">Outreach Engine</div>
-          </div>
-        )}
-        <button
-          className="icon-btn"
-          id="sidebarCollapseBtn"
-          style={{ marginLeft: collapsed ? '0' : 'auto' }}
-          onClick={onToggleCollapse}
-          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          <ChevronLeftIcon />
-        </button>
+    <aside className="sidebar-rail">
+      {/* Brand mark (top) */}
+      <div className="brand-mark-rail">
+        L
       </div>
 
-      <div className="nav-group">
-        <div className="nav-label">Workspace</div>
+      {/* Nav items */}
+      <div className="nav-items-rail">
         <button
-          className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+          className={`nav-item-rail ${currentView === 'dashboard' ? 'active' : ''}`}
           onClick={() => onViewChange('dashboard')}
-          title="Dashboard"
         >
           <LayersIcon />
-          <span>Dashboard</span>
+          <span className="tooltip">Dashboard</span>
         </button>
         <button
-          className={`nav-item ${currentView === 'pipeline' ? 'active' : ''}`}
+          className={`nav-item-rail ${currentView === 'pipeline' ? 'active' : ''}`}
           onClick={() => onViewChange('pipeline')}
-          title="Pipeline"
         >
           <TagIcon />
-          <span>Pipeline</span>
+          <span className="tooltip">Pipeline</span>
         </button>
         <button
-          className={`nav-item ${currentView === 'contacts' ? 'active' : ''}`}
+          className={`nav-item-rail ${currentView === 'contacts' ? 'active' : ''}`}
           onClick={() => onViewChange('contacts')}
-          title="Contacts"
         >
-          <span style={{ position: 'relative', display: 'inline-flex' }} id="contactsNavIconWrap">
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
             <UserIcon />
           </span>
-          <span>Contacts</span>
+          <span className="tooltip">Contacts</span>
         </button>
         <button
-          className={`nav-item ${currentView === 'reports' ? 'active' : ''}`}
+          className={`nav-item-rail ${currentView === 'reports' ? 'active' : ''}`}
           onClick={() => onViewChange('reports')}
-          title="Reports"
         >
           <PulseIcon />
-          <span>Reports</span>
+          <span className="tooltip">Reports</span>
         </button>
       </div>
 
-      <div className="nav-group">
-        <div className="nav-label">Configure</div>
+      {/* Spacer */}
+      <div className="rail-spacer"></div>
+
+      {/* Bottom items */}
+      <div className="nav-items-rail">
         <button
-          className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
+          className={`nav-item-rail ${currentView === 'settings' ? 'active' : ''}`}
           onClick={() => onViewChange('settings')}
-          title="Settings"
         >
           <SettingsIcon />
-          <span>Settings</span>
+          <span className="tooltip">Settings</span>
         </button>
-      </div>
-
-      <div className="sidebar-foot">
-        <div className="sync-row">
-          <span className="dot pulse"></span>
-          <span>Synced · Just now</span>
-        </div>
-        <div className="user-card" id="userCard" onClick={handleUserCardClick} style={{ cursor: 'pointer' }}>
-          <div className="avatar" style={{ backgroundColor: me?.color || '#C9A24B' }}>
+        
+        {/* Profile / Logout */}
+        <button
+          className="nav-item-rail profile-btn-rail"
+          onClick={handleUserCardClick}
+        >
+          <div className="avatar-rail" style={{ backgroundColor: me?.color || '#C9A24B' }}>
             {me?.avatar || 'SA'}
           </div>
-          <div className="user-meta">
-            <div className="user-name">{me?.name || 'Saad Ahmad'}</div>
-            <div className="user-role">{me?.role || 'Principal Agent'}</div>
-          </div>
-        </div>
+          <span className="tooltip">Logout ({me?.name || 'Saad Ahmad'})</span>
+        </button>
       </div>
     </aside>
   );
 }
-

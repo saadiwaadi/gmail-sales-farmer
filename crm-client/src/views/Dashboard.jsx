@@ -4,6 +4,7 @@ import IconButton from '../components/ui/IconButton';
 import Button from '../components/ui/Button';
 import { MoreHorizontalIcon, FilterIcon, BoltIcon, PulseIcon } from '../components/ui/icons';
 import { addToast } from '../hooks/useToast';
+import '../styles/status-cards.css';
 
 export default function Dashboard({
   contactsList = [],
@@ -78,28 +79,101 @@ export default function Dashboard({
       }, 0)
     : 0;
 
+  // Additional status card calculations
+  const aiReadyPct = totalContacts ? Math.round((aiReadyContacts / totalContacts) * 100) : 0;
+  const contactedCount = contactsList ? contactsList.filter(c => ['Sent', 'Replied / Booked', 'Offer', 'Closed'].includes(c.stage)).length : 0;
+  const contactedPct = totalContacts ? Math.round((contactedCount / totalContacts) * 100) : 0;
+
   return (
     <div className="view" id="view-dashboard">
       {/* Dynamic Stat Cards */}
-      <div className="stat-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.2rem', marginBottom: '1.5rem' }}>
-        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>Total Contacts</div>
-          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--accent)' }}>{totalContacts}</div>
-          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Contacts in pipeline</div>
-        </Card>
-        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>AI Ready</div>
-          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--amber)' }}>{aiReadyContacts}</div>
-          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Extracted research profiles</div>
-        </Card>
-        <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <div className="l" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', fontWeight: '500' }}>Replied This Week</div>
-          <div className="n" style={{ fontSize: '2.2rem', fontWeight: '600', fontFamily: 'var(--serif)', color: 'var(--accent)' }}>{repliedThisWeek}</div>
-          <div className="d" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Outreach replies received</div>
-        </Card>
+      <div className="stat-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '1.5rem' }}>
+        
+        {/* Card 1: Hero Outreach Status */}
+        <div className="status-hero-card">
+          <div className="status-head">
+            <div>
+              <h1>Status.</h1>
+              <p>Fully self-sufficient.</p>
+            </div>
+            <div className="status-mark">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+
+          <div className="status-hero">
+            <div className="status-hero-value">
+              {aiReadyPct}<span className="pct">%</span>
+            </div>
+            <div className="status-hero-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <div className="status-pills">
+            <span className="status-pill">{aiReadyPct}% AI Ready</span>
+            <span className="status-pill">{contactedPct}% Contacted</span>
+          </div>
+        </div>
+
+        {/* Card 2: Featured Outreach Card */}
+        <div className="status-feature">
+          <div className="status-feature-top">
+            <span className="status-feature-label">Research Status.</span>
+            <span className="status-feature-meta">{aiReadyContacts} profiles</span>
+          </div>
+          <div className="status-feature-value">Active</div>
+        </div>
+
+        {/* Card 3: Two-Up Stat Grid */}
+        <div className="status-grid2">
+          <div className="status-stat-card">
+            <div className="status-stat-top">
+              <span className="status-stat-meta">{repliedThisWeek} replies</span>
+            </div>
+            <div className="status-stat-icon">
+              {/* Sun SVG */}
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>
+                <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+                <line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+              </svg>
+            </div>
+            <span className="status-stat-label">Replies.</span>
+            <span className="status-stat-value">{repliedThisWeek} this week</span>
+          </div>
+
+          <div className="status-stat-card">
+            <div className="status-stat-top">
+              <span className="status-stat-meta">{contactedCount} contacted</span>
+            </div>
+            <div className="status-stat-icon">
+              {/* Battery SVG */}
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round">
+                <rect x="7" y="4" width="10" height="18" rx="2"></rect>
+                <line x1="10" y1="1" x2="14" y2="1"></line>
+                <rect x="9" y="12" width="6" height="7" fill="#3ecf8e" stroke="none"></rect>
+              </svg>
+            </div>
+            <span className="status-stat-label">Outreach.</span>
+            <span className="status-stat-value">{contactedPct}%</span>
+          </div>
+        </div>
+
       </div>
 
-      <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px', alignItems: 'start' }}>
         {/* LEFT COLUMN: Recent Activity */}
         <div className="col" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card>

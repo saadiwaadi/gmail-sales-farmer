@@ -26,9 +26,53 @@
   --sans: 'IBM Plex Sans', sans-serif;
   --serif: 'Newsreader', serif;
   --mono: 'IBM Plex Mono', monospace;
-  --ease: cubic-bezier(.4,0,.2,1);
-  --sidebar-w: 260px;
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --sidebar-w: 80px;
+
+  /* radii */
+  --r-card: 22px;
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 8px;
+  --r-pill: 999px;
+
+  /* easing */
+  --spring: cubic-bezier(.34,1.56,.64,1);
+
+  /* card glass (default dark-theme friendly) */
+  --card-glass: rgba(30,28,40,.55);
+  --card-glass-border: rgba(255,255,255,.09);
+  --card-shadow: 0 28px 60px -24px rgba(0,0,0,.65), 0 4px 14px -6px rgba(0,0,0,.4);
+  --card-shadow-soft: 0 8px 24px -14px rgba(0,0,0,.22);
+  --stroke: rgba(255,255,255,.07);
+  --stroke-2: rgba(255,255,255,.12);
+
+  /* Surgically injected card variables (default dark-theme friendly) */
+  --r-card: 28px;
+  --r-lg: 22px;
+  --r-md: 16px;
+  --shadow-card: 0 30px 70px -30px rgba(0,0,0,0.7);
+  --shadow-card-soft: 0 10px 30px -18px rgba(48,40,90,0.28);
+  --card-bg: rgba(40,38,52,0.52);
+  --card-bg-hover: rgba(46,43,60,0.66);
+  --card-border: rgba(255,255,255,0.09);
+  --card-padding: 24px;
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
 }
+
+[data-theme="light"] {
+  --card-glass: rgba(255,255,255,.55);
+  --card-glass-border: rgba(255,255,255,.80);
+  --card-shadow: 0 20px 50px -20px rgba(40,30,80,.28), 0 4px 12px -6px rgba(40,30,80,.14);
+  --card-shadow-soft: 0 8px 24px -14px rgba(40,30,80,.22);
+  --stroke: rgba(28,28,34,.07);
+  --stroke-2: rgba(28,28,34,.12);
+  --card-bg: rgba(255,255,255,0.60);
+  --card-bg-hover: rgba(255,255,255,0.78);
+  --card-border: rgba(255,255,255,0.85);
+  --shadow-card: 0 24px 60px -26px rgba(48,40,90,0.35), 0 4px 14px -8px rgba(48,40,90,0.18);
+}
+
 
 html.comfortable { font-size: 16px; }
 html { font-size: 14px; }
@@ -124,3 +168,78 @@ button { font-family: inherit; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Ambient Background Blobs ---------- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.35; /* default light opacity */
+  animation: drift 28s ease-in-out infinite alternate;
+}
+
+/* default dark theme if no data-theme (default app color scheme is dark) */
+body:not([data-theme="light"]) .ambient-blob {
+  opacity: 0.18;
+}
+
+[data-theme="dark"] .ambient-blob {
+  opacity: 0.18;
+}
+
+.blob-a {
+  width: 45vw;
+  height: 45vw;
+  left: -10vw;
+  top: -10vw;
+  background: #559A80;
+  animation-duration: 24s;
+}
+
+.blob-b {
+  width: 40vw;
+  height: 40vw;
+  right: -5vw;
+  top: 15vw;
+  background: #E0B873; /* Amber secondary */
+  animation-duration: 32s;
+  animation-delay: -5s;
+}
+
+.blob-c {
+  width: 50vw;
+  height: 50vw;
+  left: 20vw;
+  bottom: -15vw;
+  background: #D98066; /* Rust secondary */
+  animation-duration: 28s;
+  animation-delay: -10s;
+}
+
+.blob-d {
+  width: 35vw;
+  height: 35vw;
+  right: 15vw;
+  bottom: 25vw;
+  background: #3E7A63; /* Accent Deep */
+  animation-duration: 30s;
+  animation-delay: -15s;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(4vw, -3vw) scale(1.08);
+  }
+}
+

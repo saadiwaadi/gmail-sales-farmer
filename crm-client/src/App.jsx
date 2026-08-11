@@ -215,7 +215,9 @@ export default function App() {
         board[stage] = [];
       }
       board[stage].push({
+        id: c.id,
         name: c.name,
+        stage: stage,
         prop: c.role ? `${c.role} @ ${c.company}` : `${c.company}`,
         value: c.score ? `$${(c.score * 10000).toLocaleString()}` : '$0'
       });
@@ -420,6 +422,55 @@ export default function App() {
     } catch (err) {
       console.error('Error creating contact:', err);
       addToast('attn', 'Failed to save contact.');
+    }
+  };
+
+  const handleEditContactConfirm = async (contactId, updatedData) => {
+    try {
+      const res = await api('PATCH', `/api/contacts/${contactId}`, updatedData);
+      if (res.success) {
+        addToast('ready', 'Contact details updated successfully.');
+        await loadContacts(); // reload contacts to refresh state
+        setModal({ show: false, type: null, data: null });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to update contact details.');
+    }
+  };
+
+  const handleDeleteContactConfirm = async (contactId) => {
+    if (!window.confirm('Are you sure you want to delete this contact? This will remove all message logs.')) {
+      return;
+    }
+    try {
+      const res = await api('DELETE', `/api/contacts/${contactId}`);
+      if (res.success) {
+        addToast('ready', 'Contact deleted successfully.');
+        await loadContacts(); // reload contacts to refresh state
+        setModal({ show: false, type: null, data: null });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to delete contact.');
+    }
+  };
+
+  const handleDeleteMultipleContacts = async (ids) => {
+    if (!window.confirm(`Are you sure you want to delete ${ids.length} selected contact(s)? This will remove all associated message logs.`)) {
+      return false;
+    }
+    try {
+      const res = await api('POST', '/api/contacts/delete-multiple', { ids });
+      if (res.success) {
+        addToast('ready', `${ids.length} contact(s) deleted successfully.`);
+        await loadContacts();
+        return true;
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to delete selected contacts.');
+      return false;
     }
   };
 
@@ -677,10 +728,12 @@ export default function App() {
 
   return (
     <div className="liquid-glass-bg">
-      {/* Background orbs */}
-      <div className="bg-orbs">
-        <div className="bg-orb-1"></div>
-        <div className="bg-orb-2"></div>
+      {/* Ambient background layers */}
+      <div className="ambient">
+        <div className="ambient-blob blob-a"></div>
+        <div className="ambient-blob blob-b"></div>
+        <div className="ambient-blob blob-c"></div>
+        <div className="ambient-blob blob-d"></div>
       </div>
 
       <div className="workspace">
@@ -711,6 +764,7 @@ export default function App() {
             {/* Segments Secondary rail */}
             <SegmentsRail
               show={currentView === 'contacts' || currentView === 'pipeline'}
+              currentView={currentView}
               activeSegment={activeSegment}
               onSegmentChange={setActiveSegment}
               collapsed={segmentsCollapsed}
@@ -740,6 +794,8 @@ export default function App() {
                   activeSegment={activeSegment}
                   onOpenContact={handleOpenContact}
                   onAddDeal={handleAddContact}
+                  onEditContact={(contact) => setModal({ show: true, type: 'edit-contact', data: contact })}
+                  onDeleteMultiple={handleDeleteMultipleContacts}
                 />
               )}
 
@@ -836,8 +892,8 @@ export default function App() {
       <Modal
         show={modal.show}
         onClose={() => setModal({ show: false, type: null, data: null })}
-        className={modal.type === 'new-contact' ? 'wizard-card-bg' : ''}
-        style={modal.type === 'new-contact' ? { width: '440px', padding: '34px 30px 26px', borderRadius: '28px' } : {}}
+        className={modal.type === 'new-contact' || modal.type === 'edit-contact' ? 'wizard-card-bg' : ''}
+        style={modal.type === 'new-contact' || modal.type === 'edit-contact' ? { width: '480px', padding: '34px 30px 26px', borderRadius: '28px' } : {}}
       >
         {modal.type === 'import' && (
           <ImportWizard
@@ -861,6 +917,15 @@ export default function App() {
             stage={modal.data}
             onCreate={(data, shouldExtract) => handleCreateContactConfirm(modal.data, data, shouldExtract)}
             onConfirmImport={handleAutoDistributeLeads}
+            onCancel={() => setModal({ show: false, type: null, data: null })}
+          />
+        )}
+
+        {modal.type === 'edit-contact' && (
+          <EditContactForm
+            contact={modal.data}
+            onSave={handleEditContactConfirm}
+            onDelete={handleDeleteContactConfirm}
             onCancel={() => setModal({ show: false, type: null, data: null })}
           />
         )}
@@ -1266,6 +1331,147 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function EditContactForm({ contact, onSave, onDelete, onCancel }) {
+  const [name, setName] = useState(contact.name || '');
+  const [company, setCompany] = useState(contact.company || '');
+  const [role, setRole] = useState(contact.role || '');
+  const [industry, setIndustry] = useState(contact.industry || '');
+  const [email, setEmail] = useState(contact.email || '');
+  const [score, setScore] = useState(contact.score || 50);
+  const [stage, setStage] = useState(contact.stage || 'New Lead');
+  const [rawDump, setRawDump] = useState(contact.raw_dump || '');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (!name || !company) {
+      addToast('attn', 'Name and Company are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSave(contact.id, {
+        name,
+        company,
+        role,
+        industry,
+        email,
+        score: Number(score),
+        stage,
+        raw_dump: rawDump
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mapStageToSelect = (s) => {
+    const mapping = {
+      'New Lead': 'New Lead',
+      'Not Contacted': 'New Lead',
+      'Qualified': 'Qualified',
+      'Research Done': 'Qualified',
+      'Showing': 'Showing',
+      'Drafted': 'Showing',
+      'Offer': 'Offer',
+      'Sent': 'Offer',
+      'Closed': 'Closed',
+      'Replied / Booked': 'Closed'
+    };
+    return mapping[s] || 'New Lead';
+  };
+
+  const [selectedStage, setSelectedStage] = useState(mapStageToSelect(stage));
+
+  const handleSelectStage = (val) => {
+    setSelectedStage(val);
+    const mapping = {
+      'New Lead': 'New Lead',
+      'Qualified': 'Qualified',
+      'Showing': 'Showing',
+      'Offer': 'Offer',
+      'Closed': 'Closed'
+    };
+    setStage(mapping[val] || val);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="card-head" style={{ marginBottom: '0.4rem' }}>
+        <div className="card-title">Edit Contact</div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="field">
+          <label>Full Name</label>
+          <input value={name} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Company</label>
+          <input value={company} onChange={e => setCompany(e.target.value)} />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="field">
+          <label>Role</label>
+          <input value={role} onChange={e => setRole(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Industry</label>
+          <input value={industry} onChange={e => setIndustry(e.target.value)} />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="field">
+          <label>Email Address</label>
+          <input value={email} onChange={e => setEmail(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Engagement / Deal Score (1-100)</label>
+          <input type="number" min="1" max="100" value={score} onChange={e => setScore(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Pipeline Stage</label>
+        <select value={selectedStage} onChange={e => handleSelectStage(e.target.value)} className="select-input" style={{ width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--panel-sunk)', border: '1px solid var(--border)', color: 'var(--text-1)' }}>
+          <option value="New Lead">New Lead (Not Contacted)</option>
+          <option value="Qualified">Qualified (Research Done)</option>
+          <option value="Showing">Showing (Drafted)</option>
+          <option value="Offer">Offer (Sent)</option>
+          <option value="Closed">Closed (Replied / Booked)</option>
+        </select>
+      </div>
+
+      <div className="field">
+        <label>Raw Research Dump / Notes</label>
+        <textarea
+          style={{ height: '7rem', resize: 'vertical', width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--panel-sunk)', border: '1px solid var(--border)', color: 'var(--text-1)', fontFamily: 'var(--mono)', fontSize: '0.8rem' }}
+          value={rawDump}
+          onChange={e => setRawDump(e.target.value)}
+        />
+      </div>
+
+      <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: '1.2rem' }}>
+        <Button variant="outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => onDelete(contact.id)}>
+          Delete Contact
+        </Button>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={loading}>
+            {loading ? 'Saving...' : 'Save changes'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

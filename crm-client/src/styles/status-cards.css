@@ -1,0 +1,223 @@
+/* status-cards.css */
+:root {
+  --status-emerald: #3ecf8e;
+  --status-emerald-dim: #1c5a41;
+  --status-emerald-tint: #17251d;
+  --status-text-primary: #f4f6f4;
+  --status-text-secondary: #8b948e;
+  --status-text-tertiary: #565e59;
+}
+
+/* Header */
+.status-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.status-head h1 {
+  font-family: 'Newsreader', serif;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--status-text-primary);
+  margin: 0;
+}
+.status-head p {
+  font-size: 13px;
+  color: var(--status-text-tertiary);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+.status-mark {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 16px;
+  margin-top: 4px;
+}
+.status-mark span {
+  width: 3px;
+  background: var(--status-emerald);
+  border-radius: 2px;
+}
+.status-mark span:nth-child(1) { height: 60%; opacity: .5; }
+.status-mark span:nth-child(2) { height: 100%; }
+.status-mark span:nth-child(3) { height: 40%; opacity: .4; }
+.status-mark span:nth-child(4) { height: 80%; opacity: .7; }
+
+/* Hero section */
+.status-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.status-hero-value {
+  font-family: 'Newsreader', serif;
+  font-weight: 500;
+  font-size: 78px;
+  line-height: 0.85;
+  color: var(--status-text-primary);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.status-hero-value .pct {
+  font-size: 42px;
+  color: var(--status-text-secondary);
+}
+.status-hero-arrow {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--status-emerald-tint);
+  border: 1px solid var(--status-emerald-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.status-hero-arrow:hover {
+  transform: translateY(-2px);
+}
+.status-hero-arrow svg { width: 13px; height: 13px; }
+
+/* Pills */
+.status-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.status-pill {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--status-text-secondary);
+  background: #111411;
+  border: 1px solid #1e231f;
+  padding: 6px 11px;
+  border-radius: 100px;
+  letter-spacing: 0.01em;
+}
+
+/* Feature card */
+.status-feature {
+  background: linear-gradient(135deg, var(--status-emerald-tint), #0e1c15 70%);
+  border: 1px solid var(--status-emerald-dim);
+  border-radius: 18px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.status-feature::after {
+  content: '';
+  position: absolute;
+  top: -40%; right: -20%;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(62,207,142,0.18), transparent 70%);
+  pointer-events: none;
+}
+.status-feature-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 26px;
+  position: relative;
+  z-index: 2;
+}
+.status-feature-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--status-text-primary);
+}
+.status-feature-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--status-emerald);
+  background: rgba(62,207,142,0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.status-feature-value {
+  font-family: 'Newsreader', serif;
+  font-weight: 500;
+  font-size: 38px;
+  color: var(--status-text-primary);
+  position: relative;
+  z-index: 2;
+}
+
+/* Two-up grid */
+.status-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  height: 100%;
+}
+.status-stat-card {
+  background: #111411;
+  border: 1px solid #1e231f;
+  border-radius: 18px;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.status-stat-card:hover {
+  border-color: var(--status-emerald-dim);
+  transform: translateY(-2px);
+}
+.status-stat-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.status-stat-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--status-text-tertiary);
+}
+.status-stat-icon {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: var(--status-emerald-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: var(--status-emerald);
+}
+.status-stat-icon svg { width: 13px; height: 13px; }
+.status-stat-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--status-text-primary);
+  margin-bottom: 4px;
+}
+.status-stat-value {
+  font-family: 'Newsreader', serif;
+  font-weight: 500;
+  font-size: 26px;
+  color: var(--status-text-primary);
+}
+
+/* Adapt standard card styles for Hero status wrapper */
+.status-hero-card {
+  background: #0b0d0b;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}

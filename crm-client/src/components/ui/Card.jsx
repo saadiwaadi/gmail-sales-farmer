@@ -7,7 +7,7 @@ export default function Card({
   glow = true,
   glass = false
 }) {
-  const cardClasses = `${glass ? 'glass' : 'card'} ${className}`;
+  const cardClasses = `ui-card ${glass ? 'glass' : 'card'} ${className}`;
 
   return (
     <div className={cardClasses} style={style}>
