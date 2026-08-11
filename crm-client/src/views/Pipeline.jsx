@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Card from '../components/ui/Card';
 import { addToast } from '../hooks/useToast';
 
 export default function Pipeline({
@@ -125,32 +124,18 @@ export default function Pipeline({
         </div>
       </div>
 
-      <div className="kanban" id="kanbanBoard" style={{ display: 'flex', flexDirection: 'column', gap: '0px', width: '100%', border: '1px solid var(--border)', borderRadius: '0px' }}>
+      <div className="flex flex-col gap-3 w-full" id="kanbanBoard">
         {filteredDeals.map((deal, idx) => {
           const contact = contactsList.find(c => c.name === deal.name) || {};
           const contactId = deal.id || contact.id;
           const isSelected = selectedIds.has(contactId);
 
           return (
-            <Card
+            <div
               key={idx}
-              glass={true}
-              glow={false}
-              className={`kcard ${isSelected ? 'selected' : ''}`}
-              style={{ 
-                cursor: 'pointer',
-                border: 'none',
-                borderBottom: idx === filteredDeals.length - 1 ? 'none' : '1px solid var(--border)',
-                background: isSelected ? 'rgba(239, 68, 68, 0.05)' : 'var(--card-bg)',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.75rem 1.2rem',
-                gap: '16px',
-                width: '100%',
-                borderRadius: '0px'
-              }}
+              className={`group cursor-pointer bg-white/5 border border-white/10 rounded-xl backdrop-blur-md flex items-center justify-between w-full gap-4 px-6 py-4 transition-all hover:bg-white/10 ${
+                isSelected ? 'border-red-500/50 bg-red-500/5' : ''
+              }`}
               onClick={() => {
                 if (selectMode) {
                   handleToggleSelect(contactId);
@@ -159,73 +144,85 @@ export default function Pipeline({
                 }
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '150px', flex: 1.2, overflow: 'hidden' }}>
+              {/* Left Column: Checkbox & Name */}
+              <div className="flex items-center gap-3 min-w-0 flex-shrink-0" style={{ width: '180px' }}>
                 {selectMode && (
                   <input 
                     type="checkbox" 
                     checked={isSelected}
                     onChange={() => handleToggleSelect(contactId)}
                     onClick={(e) => e.stopPropagation()} 
-                    style={{ accentColor: '#ef4444', cursor: 'pointer' }}
+                    className="accent-red-500 cursor-pointer h-4 w-4 rounded border-gray-300"
                   />
                 )}
-                <div className="kcard-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 600, fontSize: '0.82rem', margin: 0 }}>
+                <span className="text-white font-semibold text-sm truncate select-none">
                   {deal.name}
+                </span>
+              </div>
+
+              {/* Middle Columns: Stage, Company, Role, Email */}
+              <div className="flex items-center justify-between flex-1 min-w-0 gap-6">
+                {/* Stage */}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Stage:</span>
+                  <span className="text-white text-xs truncate font-medium">
+                    {deal.stage || '—'}
+                  </span>
+                </div>
+
+                {/* Company */}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Co:</span>
+                  <span className="text-white text-xs truncate font-medium">
+                    {contact.company || '—'}
+                  </span>
+                </div>
+
+                {/* Role */}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Role:</span>
+                  <span className="text-gray-300 text-xs truncate">
+                    {contact.role || '—'}
+                  </span>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-center gap-2 min-w-0 flex-[1.5]">
+                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Email:</span>
+                  <span className="text-gray-300 text-xs truncate">
+                    {contact.email || '—'}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flex: 4.5, gap: '24px', fontSize: '0.74rem', fontFamily: 'var(--mono)', opacity: 0.9 }}>
-                <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: '6px' }}>Stage:</span>
-                  <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{deal.stage || '—'}</span>
+              {/* Right Column: Score & Action Button */}
+              <div className="flex items-center gap-4 flex-shrink-0">
+                {/* Score */}
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">Score:</span>
+                  <span className="text-emerald-400 font-bold text-xs font-mono">
+                    {contact.score || '—'}
+                  </span>
                 </div>
-                <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: '6px' }}>Company:</span>
-                  <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>{contact.company || '—'}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: '6px' }}>Role:</span>
-                  <span style={{ color: 'var(--text-2)' }}>{contact.role || '—'}</span>
-                </div>
-                <div style={{ flex: 1.5, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: '6px' }}>Email:</span>
-                  <span style={{ color: 'var(--text-2)' }}>{contact.email || '—'}</span>
-                </div>
-                <div style={{ width: '85px', textAlign: 'right' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: '6px' }}>Score:</span>
-                  <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{contact.score || '—'}</span>
-                </div>
-              </div>
 
-              {!selectMode && (
-                <div 
-                  className="edit-pencil-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditContact(contact);
-                  }}
-                  title="Edit Contact"
-                  style={{
-                    opacity: 0.6,
-                    padding: '4px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'opacity 0.2s',
-                    marginLeft: '8px'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--text-2)' }}>
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </div>
-              )}
-            </Card>
+                {/* Edit Button */}
+                {!selectMode && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditContact(contact);
+                    }}
+                    title="Edit Contact"
+                    className="opacity-60 hover:opacity-100 p-1.5 rounded transition-opacity bg-white/5 hover:bg-white/10"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-gray-300">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
