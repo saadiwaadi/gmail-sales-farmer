@@ -30,7 +30,7 @@ export default function MessageRow({ msg, onResync, onOutcomeChange }) {
   const badgeStyle = BADGE_STYLES[msg.outcome] || BADGE_STYLES.no_response;
 
   return (
-    <Card glass={true} glow={false} className="msg-row" style={{ marginBottom: '0.7rem', padding: '0.85rem' }}>
+    <Card glass={false} glow={false} className="msg-row" style={{ marginBottom: '0.7rem', padding: '0.85rem', background: '#111411', borderColor: '#1e231f', borderRadius: '14px' }}>
       <div
         className="msg-row-summary"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', gap: '0.6rem' }}

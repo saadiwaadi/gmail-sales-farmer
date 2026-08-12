@@ -32,7 +32,7 @@ class MemoryReader:
         cursor.execute(
             """SELECT name, company, role, industry, raw_dump, extracted_profile, 
                       structured_memory, context_cache, memory_updated_at, 
-                      memory_version, provider_used
+                      memory_version, provider_used, is_manually_overridden
                FROM clients WHERE id = ?""",
             (client_id,)
         )
@@ -44,7 +44,7 @@ class MemoryReader:
         (
             name, company, role, industry, raw_dump, extracted_profile,
             structured_memory, context_cache, memory_updated_at,
-            memory_version, provider_used
+            memory_version, provider_used, is_manually_overridden
         ) = row
         
         # Parse JSON blocks
@@ -98,6 +98,7 @@ class MemoryReader:
             "memory_updated_at": memory_updated_at,
             "memory_version": memory_version or 0,
             "provider_used": provider_used,
+            "is_manually_overridden": bool(is_manually_overridden),
             "tone_notes": tone_notes,
             "message_history": messages
         }

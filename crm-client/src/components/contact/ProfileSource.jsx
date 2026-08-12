@@ -11,7 +11,7 @@ export default function ProfileSource({ contact, onSaveRawDump, onReextractProfi
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+      <Card style={{ padding: '1.4rem' }}>
         <div className="card-title" style={{ marginBottom: '0.8rem' }}>Current research dump</div>
         <pre
           style={{
@@ -32,7 +32,7 @@ export default function ProfileSource({ contact, onSaveRawDump, onReextractProfi
         </pre>
       </Card>
 
-      <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+      <Card style={{ padding: '1.4rem' }}>
         <div className="divider-label" style={{ marginBottom: '1.2rem' }}>
           <span>Update research</span>
           <div className="rule"></div>

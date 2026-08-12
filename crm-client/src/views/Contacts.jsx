@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { addToast } from '../hooks/useToast';
+import Toggle from '../components/ui/Toggle';
 
 export default function Contacts({
   contactsList = [],
@@ -9,7 +10,8 @@ export default function Contacts({
   onUpdateMessageOutcome,
   onGenerateDraftInline,
   availableTones = [],
-  loadContacts
+  loadContacts,
+  onToggleOverrideLock
 }) {
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [threadCollapsed, setThreadCollapsed] = useState(false);
@@ -17,14 +19,6 @@ export default function Contacts({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeContactId, setActiveContactId] = useState(null);
   
-  // local drafts state: { [contactId]: { subject, body } }
-  const [drafts, setDrafts] = useState({});
-  const [refineInstructions, setRefineInstructions] = useState({});
-  const [generating, setGenerating] = useState(false);
-  const [openPillMenuId, setOpenPillMenuId] = useState(null);
-  const [refineOpen, setRefineOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
-
   // Sync activeContactId when contactsList loads
   useEffect(() => {
     if (contactsList.length > 0 && !activeContactId) {
@@ -33,6 +27,68 @@ export default function Contacts({
   }, [contactsList, activeContactId]);
 
   const activeContact = contactsList.find(c => c.id === activeContactId) || contactsList[0] || null;
+
+  // local drafts state: { [contactId]: { subject, body } }
+  const [drafts, setDrafts] = useState({});
+  const [refineInstructions, setRefineInstructions] = useState({});
+  const [generating, setGenerating] = useState(false);
+  const [openPillMenuId, setOpenPillMenuId] = useState(null);
+  const [refineOpen, setRefineOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderAt, setReminderAt] = useState('');
+  const [reminderNote, setReminderNote] = useState('');
+
+  // Sync reminder inputs when activeContact changes or modal opens
+  useEffect(() => {
+    if (activeContact) {
+      setReminderAt(activeContact.reminder_at ? activeContact.reminder_at.substring(0, 16) : '');
+      setReminderNote(activeContact.reminder_note || '');
+    }
+  }, [activeContact?.id, showReminderModal]);
+
+  const handleSaveReminder = async () => {
+    if (!reminderAt) {
+      addToast('attn', 'Please select a date and time.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/contacts/${activeContact.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reminder_at: reminderAt,
+          reminder_note: reminderNote
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save reminder');
+      addToast('ready', 'Follow-up reminder set.');
+      setShowReminderModal(false);
+      if (loadContacts) await loadContacts();
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to save reminder.');
+    }
+  };
+
+  const handleClearReminder = async () => {
+    try {
+      const res = await fetch(`/api/contacts/${activeContact.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reminder_at: null,
+          reminder_note: null
+        })
+      });
+      if (!res.ok) throw new Error('Failed to clear reminder');
+      addToast('ready', 'Reminder cleared.');
+      if (loadContacts) await loadContacts();
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to clear reminder.');
+    }
+  };
 
   // Initialize draft when switching contacts
   useEffect(() => {
@@ -49,7 +105,7 @@ export default function Contacts({
   }, [activeContact]);
 
   const getFilteredContacts = () => {
-    return contactsList.filter(c => {
+    const list = contactsList.filter(c => {
       const term = searchQuery.trim().toLowerCase();
       const matchesSearch = !term || 
         c.name.toLowerCase().includes(term) || 
@@ -64,6 +120,15 @@ export default function Contacts({
         matchesFilter = c.stage === 'Replied' || c.stage === 'Replied / Booked';
       }
       return matchesSearch && matchesFilter;
+    });
+
+    // Sort: Reminders that are due first!
+    return list.sort((a, b) => {
+      const aDue = a.reminder_at && new Date(a.reminder_at) < new Date();
+      const bDue = b.reminder_at && new Date(b.reminder_at) < new Date();
+      if (aDue && !bDue) return -1;
+      if (!aDue && bDue) return 1;
+      return 0;
     });
   };
 
@@ -262,13 +327,14 @@ export default function Contacts({
         }
 
         .chat-panel {
-          background: linear-gradient(170deg, var(--panel-0), var(--panel-1) 80%);
-          border: 1px solid var(--line);
+          background: var(--card-glass);
+          backdrop-filter: blur(24px) saturate(140%);
+          -webkit-backdrop-filter: blur(24px) saturate(140%);
+          border: 1px solid var(--card-glass-border);
           border-radius: 20px;
           display: flex;
           flex-direction: column;
           position: relative;
-          overflow: hidden;
           box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.015) inset;
         }
 
@@ -279,15 +345,15 @@ export default function Contacts({
           right: -13px;
           width: 26px; height: 26px;
           border-radius: 50%;
-          background: #1a1b1c;
-          border: 1px solid var(--line);
+          background: #111411;
+          border: 1px solid #1e231f;
           color: var(--text-1);
           display: flex; align-items: center; justify-content: center;
           cursor: pointer;
           z-index: 5;
-          transition: background .2s ease, color .2s ease, transform .3s cubic-bezier(.16,1,.3,1);
+          transition: background .2s ease, border-color .2s ease, color .2s ease, transform .3s cubic-bezier(.16,1,.3,1);
         }
-        .chat-collapse-btn:hover { background: #212223; color: var(--text-0); }
+        .chat-collapse-btn:hover { background: #1c5a41; border-color: #3ecf8e; color: var(--text-0); }
         .chat-collapse-btn svg { transition: transform .35s cubic-bezier(.16,1,.3,1); }
         .chat-rail.collapsed .chat-collapse-btn svg,
         .chat-thread-panel.collapsed .chat-collapse-btn svg { transform: rotate(180deg); }
@@ -423,10 +489,15 @@ export default function Contacts({
           position: relative;
           padding: 13px 14px 13px 20px;
           margin-bottom: 10px;
-          background: rgba(255,255,255,0.025);
-          border: 1px solid var(--line-soft);
+          background: #111411;
+          border: 1px solid #1e231f;
           border-radius: 14px;
           animation: cardIn .35s cubic-bezier(.16,1,.3,1);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+        .chat-msg-card:hover {
+          border-color: var(--status-emerald-dim, #1c5a41);
         }
         @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -528,13 +599,14 @@ export default function Contacts({
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .chat-draft-box {
-          background: rgba(255,255,255,0.02);
-          border: 1px solid var(--line-soft);
+          background: #111411;
+          border: 1px solid #1e231f;
           border-radius: 16px;
           overflow: hidden;
           transition: border-color .2s ease;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
-        .chat-draft-box:focus-within { border-color: var(--accent-line); }
+        .chat-draft-box:focus-within { border-color: var(--status-emerald-dim, #1c5a41); }
         
         .chat-action-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
         .chat-act-btn {
@@ -682,6 +754,7 @@ export default function Contacts({
             {filteredContacts.map((c) => {
               const preview = c.messages?.[0]?.body || c.raw_dump || 'No previous communication';
               const aiClass = getAiClass(c.ai_status);
+              const isReminderDue = c.reminder_at && new Date(c.reminder_at) < new Date();
               
               return (
                 <div 
@@ -695,7 +768,31 @@ export default function Contacts({
                   </div>
                   <div className="chat-c-text">
                     <div className="chat-c-top">
-                      <span className="chat-c-name">{c.name}</span>
+                      <span className="chat-c-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {c.name}
+                        {c.is_manually_overridden ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px', color: 'var(--amber)', flexShrink: 0 }} title="Manual Override Active">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </svg>
+                        ) : null}
+                      </span>
+                      {isReminderDue ? (
+                        <span style={{
+                          fontSize: '8.5px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          background: 'var(--red-dim)',
+                          color: 'var(--red)',
+                          border: '1px solid var(--red)',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          letterSpacing: '0.04em',
+                          flexShrink: 0
+                        }}>
+                          Follow-Up Due
+                        </span>
+                      ) : null}
                     </div>
                     <div className="chat-c-company">{c.company}</div>
                     <div className="chat-c-preview">{preview}</div>
@@ -733,12 +830,64 @@ export default function Contacts({
           <div className="chat-thread-content">
             {activeContact ? (
               <>
-                <div className="chat-thread-header">
-                  <div className="th-name">{activeContact.name}</div>
-                  <div className="th-sub">
-                    {activeContact.company} · {activeContact.messages?.length || 0} message{(activeContact.messages?.length !== 1) ? 's' : ''}
+                <div className="chat-thread-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div className="th-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {activeContact.name}
+                      {activeContact.is_manually_overridden ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--amber)' }} title="Manual Override Active">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                      ) : null}
+                    </div>
+                    <div className="th-sub">
+                      {activeContact.company} · {activeContact.messages?.length || 0} message{(activeContact.messages?.length !== 1) ? 's' : ''}
+                    </div>
                   </div>
+                  <button 
+                    onClick={() => setShowReminderModal(true)}
+                    className="chat-act-btn" 
+                    style={{ fontSize: '11px', padding: '5px 10px', borderRadius: '8px' }}
+                  >
+                    Set Reminder
+                  </button>
                 </div>
+
+                {activeContact.reminder_at && (
+                  <div style={{
+                    margin: '0 0 12px',
+                    padding: '8px 12px',
+                    background: new Date(activeContact.reminder_at) < new Date() ? 'var(--red-dim)' : 'var(--amber-dim)',
+                    border: `1px solid ${new Date(activeContact.reminder_at) < new Date() ? 'var(--red)' : 'var(--amber)'}`,
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    color: new Date(activeContact.reminder_at) < new Date() ? 'var(--red)' : 'var(--amber)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px'
+                  }}>
+                    <span>
+                      {new Date(activeContact.reminder_at) < new Date() 
+                        ? `Follow-Up Due (Set for ${new Date(activeContact.reminder_at).toLocaleString()})`
+                        : `Reminder set for ${new Date(activeContact.reminder_at).toLocaleString()}`}
+                    </span>
+                    <button 
+                      onClick={handleClearReminder}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '11px'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
                 
                 <div className="chat-timeline">
                   {(activeContact.messages || []).map((m) => {
@@ -825,16 +974,28 @@ export default function Contacts({
                   </div>
                 </div>
                 
-                <select 
-                  className="tone-select" 
-                  value={activeContact.tone_note || ''} 
-                  onChange={(e) => onToneChange(activeContact.name, e.target.value)}
-                >
-                  <option value="" disabled>Select tone</option>
-                  {(availableTones.length > 0 ? availableTones : ['Professional', 'Friendly', 'Direct', 'Casual']).map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', color: activeContact.is_manually_overridden ? 'var(--text-2)' : 'var(--accent)', fontWeight: 600 }}>
+                      {activeContact.is_manually_overridden ? 'Automation Paused' : 'Automation Active'}
+                    </span>
+                    <Toggle 
+                      on={!activeContact.is_manually_overridden} 
+                      onChange={() => onToggleOverrideLock(activeContact.id, !activeContact.is_manually_overridden)}
+                    />
+                  </div>
+
+                  <select 
+                    className="tone-select" 
+                    value={activeContact.tone_note || ''} 
+                    onChange={(e) => onToneChange(activeContact.name, e.target.value)}
+                  >
+                    <option value="" disabled>Select tone</option>
+                    {(availableTones.length > 0 ? availableTones : ['Professional', 'Friendly', 'Direct', 'Casual']).map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="chat-generate-row">
@@ -861,6 +1022,22 @@ export default function Contacts({
                   )}
                 </button>
               </div>
+
+              {activeContact.reminder_note && (
+                <div style={{
+                  background: 'rgba(251,191,36,0.06)',
+                  border: '1px dashed var(--amber)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginBottom: '12px',
+                  fontSize: '12px',
+                  lineHeight: '1.4',
+                  color: '#fff'
+                }}>
+                  <strong style={{ color: 'var(--amber)', display: 'block', marginBottom: '3px' }}>Reminder Note:</strong>
+                  {activeContact.reminder_note}
+                </div>
+              )}
 
               <div className="chat-draft-box">
                 <input 
@@ -937,7 +1114,88 @@ export default function Contacts({
             </div>
           )}
         </main>
-      </div>
+    </div>
+
+      {showReminderModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#111411',
+            border: '1px solid #1e231f',
+            borderRadius: '16px',
+            padding: '24px',
+            width: '380px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+          }}>
+            <h3 style={{ margin: '0 0 16px', color: '#fff', fontSize: '16px' }}>Set Follow-Up Reminder</h3>
+            
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-1)', marginBottom: '6px' }}>Reminder Date & Time</label>
+              <input
+                type="datetime-local"
+                value={reminderAt}
+                onChange={(e) => setReminderAt(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid var(--line-soft)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: '#fff',
+                  fontSize: '13px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-1)', marginBottom: '6px' }}>Quick Note (Optional)</label>
+              <textarea
+                value={reminderNote}
+                onChange={(e) => setReminderNote(e.target.value)}
+                placeholder="e.g. Discuss new budget proposal..."
+                style={{
+                  width: '100%',
+                  height: '80px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid var(--line-soft)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: '#fff',
+                  fontSize: '13px',
+                  outline: 'none',
+                  resize: 'none'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => setShowReminderModal(false)}
+                className="chat-act-btn"
+                style={{ padding: '8px 14px', borderRadius: '8px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveReminder}
+                className="chat-act-btn primary"
+                style={{ padding: '8px 14px', borderRadius: '8px' }}
+              >
+                Save Reminder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

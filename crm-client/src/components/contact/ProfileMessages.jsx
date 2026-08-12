@@ -8,7 +8,7 @@ export default function ProfileMessages({ contact, onGenerateDraft, onResyncMess
 
   return (
     <div>
-      <Card glass={true} glow={false} style={{ padding: '1.2rem', marginBottom: '1.2rem' }}>
+      <Card style={{ padding: '1.2rem', marginBottom: '1.2rem' }}>
         <Button
           variant="primary"
           id="genFpDraftBtn"

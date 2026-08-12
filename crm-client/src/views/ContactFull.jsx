@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import Toggle from '../components/ui/Toggle';
 import { ChevronLeftIcon } from '../components/ui/icons';
 import ProfileOverview from '../components/contact/ProfileOverview';
 import ProfileActivity from '../components/contact/ProfileActivity';
@@ -22,7 +23,8 @@ export default function ContactFull({
   onSaveMessageDraft,
   onUpdateMessageOutcome,
   onRegenerateDraftDirect,
-  onGenerateDraftInline
+  onGenerateDraftInline,
+  onToggleOverrideLock
 }) {
   const [activeTab, setActiveTab] = useState('profile');
   const [rawDump, setRawDump] = useState(contact?.raw_dump || '');
@@ -62,16 +64,34 @@ export default function ContactFull({
         Back
       </Button>
       
-      <Card glass={true} glow={false} style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-        <div className="full-profile-head">
-          <div className="profile-name" id="fpName" style={{ fontSize: '1.8rem', fontFamily: 'var(--serif)', marginBottom: '0.3rem' }}>
-            {contact.name}
+      <Card style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="full-profile-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div className="profile-name" id="fpName" style={{ fontSize: '1.8rem', fontFamily: 'var(--serif)', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {contact.name}
+              {contact.is_manually_overridden ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: 'var(--amber)' }} title="Manual Override Active">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              ) : null}
+            </div>
+            <div className="profile-tag" id="fpTag" style={{ fontSize: '0.85rem', color: 'var(--text-3)', marginBottom: '0.8rem' }}>
+              {contact.type ? contact.type.toUpperCase() : ''} · {contact.stage} · Score: {contact.score}
+            </div>
+            <div id="fpStatus">
+              <Badge status={contact.ai_status} />
+            </div>
           </div>
-          <div className="profile-tag" id="fpTag" style={{ fontSize: '0.85rem', color: 'var(--text-3)', marginBottom: '0.8rem' }}>
-            {contact.type ? contact.type.toUpperCase() : ''} · {contact.stage} · Score: {contact.score}
-          </div>
-          <div id="fpStatus">
-            <Badge status={contact.ai_status} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', color: contact.is_manually_overridden ? 'var(--text-3)' : 'var(--accent)', fontWeight: 600 }}>
+              {contact.is_manually_overridden ? 'Automation Paused' : 'Automation Active'}
+            </span>
+            <Toggle 
+              on={!contact.is_manually_overridden} 
+              onChange={() => onToggleOverrideLock(contact.id, !contact.is_manually_overridden)}
+            />
           </div>
         </div>
       </Card>
@@ -121,12 +141,14 @@ export default function ContactFull({
             availableTones={availableTones}
             onUpdateMessageOutcome={onUpdateMessageOutcome}
             onResyncMessage={onResyncMessage}
+            onSaveRawDump={onSaveRawDump}
+            onReextractProfile={onReextractProfile}
           />
         )}
 
         {activeTab === 'history' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+            <Card style={{ padding: '1.4rem' }}>
               <div className="card-title" style={{ marginBottom: '1.2rem' }}>Message Logs & Outcomes</div>
               <div className="msg-history-list">
                 {contact.messages && contact.messages.length > 0 ? (
@@ -146,7 +168,7 @@ export default function ContactFull({
               </div>
             </Card>
 
-            <Card glass={true} glow={false} style={{ padding: '1.4rem' }}>
+            <Card style={{ padding: '1.4rem' }}>
               <div className="card-title" style={{ marginBottom: '1.2rem' }}>Activity Timeline</div>
               <ProfileActivity contact={contact} />
             </Card>

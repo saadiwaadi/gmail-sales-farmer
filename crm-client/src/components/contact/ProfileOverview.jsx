@@ -39,7 +39,7 @@ export default function ProfileOverview({ contact, onToneChange, availableTones 
   };
 
   return (
-    <Card glass={true} glow={false} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.5rem' }}>
+    <Card style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.5rem' }}>
       <div className="kv-row">
         <span className="k">Tone of voice</span>
         <span>{ep.tone_of_voice || '—'}</span>

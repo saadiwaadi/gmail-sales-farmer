@@ -438,7 +438,18 @@ export default function App() {
       addToast('attn', 'Failed to update contact details.');
     }
   };
-
+  const handleToggleOverrideLock = async (contactId, isLocked) => {
+    try {
+      const res = await api('PATCH', `/api/contacts/${contactId}`, { is_manually_overridden: isLocked });
+      if (res.success) {
+        addToast('ready', isLocked ? 'Automation paused/locked.' : 'Automation resumed.');
+        await loadContacts();
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('attn', 'Failed to update lock status.');
+    }
+  };
   const handleDeleteContactConfirm = async (contactId) => {
     if (!window.confirm('Are you sure you want to delete this contact? This will remove all message logs.')) {
       return;
@@ -763,7 +774,7 @@ export default function App() {
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
             {/* Segments Secondary rail */}
             <SegmentsRail
-              show={currentView === 'contacts' || currentView === 'pipeline'}
+              show={currentView === 'pipeline'}
               currentView={currentView}
               activeSegment={activeSegment}
               onSegmentChange={setActiveSegment}
@@ -796,6 +807,7 @@ export default function App() {
                   onAddDeal={handleAddContact}
                   onEditContact={(contact) => setModal({ show: true, type: 'edit-contact', data: contact })}
                   onDeleteMultiple={handleDeleteMultipleContacts}
+                  onToggleOverrideLock={handleToggleOverrideLock}
                 />
               )}
 
@@ -809,6 +821,7 @@ export default function App() {
                   onGenerateDraftInline={handleGenerateDraftInline}
                   availableTones={availableTones}
                   loadContacts={loadContacts}
+                  onToggleOverrideLock={handleToggleOverrideLock}
                 />
               )}
 
@@ -844,6 +857,7 @@ export default function App() {
                   onUpdateMessageOutcome={handleUpdateMessageOutcome}
                   onRegenerateDraftDirect={handleRegenerateDraftDirect}
                   onGenerateDraftInline={handleGenerateDraftInline}
+                  onToggleOverrideLock={handleToggleOverrideLock}
                 />
               )}
 
@@ -980,11 +994,12 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
   // Step 1: Manual Form Fields
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
-  const [dealValue, setDealValue] = useState('');
+  const [source, setSource] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedStage, setSelectedStage] = useState(stage || 'Not Contacted');
   const [notes, setNotes] = useState('');
+  const [rawContext, setRawContext] = useState('');
   const [shouldExtract, setShouldExtract] = useState(true);
   
   // Step 2: File Import State
@@ -1001,18 +1016,23 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
     }
   }, [stage]);
 
-  const handleManualSave = async () => {
+  const handleManualFormSubmit = () => {
     if (!name || !company) {
       addToast('attn', 'Name and Company are required.');
       return;
     }
+    setStep(4);
+  };
+
+  const handleManualSave = async () => {
     setLoading(true);
-    // Combine phone, deal value, and notes into raw_dump
+    // Combine phone, source, notes, and rawContext into raw_dump
     const rawDumpParts = [];
     if (phone) rawDumpParts.push(`Phone: ${phone}`);
-    if (dealValue) rawDumpParts.push(`Deal Value: $${dealValue}`);
+    if (source) rawDumpParts.push(`Source: ${source}`);
     if (notes) rawDumpParts.push(`Notes: ${notes}`);
-    const rawDump = rawDumpParts.join('\n') || 'Manual entry contact created.';
+    if (rawContext) rawDumpParts.push(`Context:\n${rawContext}`);
+    const rawDump = rawDumpParts.join('\n\n') || 'Manual entry contact created.';
 
     try {
       await onCreate({
@@ -1021,7 +1041,7 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
         role: 'Client', // Default role
         email,
         raw_dump: rawDump,
-        score: Number(dealValue) || 50,
+        score: 50,
         stage: selectedStage
       }, shouldExtract);
       setLoading(false);
@@ -1080,10 +1100,20 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
     <div style={{ position: 'relative' }}>
       {/* Progress Dots */}
       <div className="progress">
-        <span className={`dot ${step === 0 ? 'active' : step > 0 ? 'done' : ''}`}></span>
-        <span className={`dot ${step === 1 || (step === 2 && !selectedFile) ? 'active' : step > 1 ? 'done' : ''}`}></span>
-        <span className={`dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}></span>
-        <span className={`dot ${step === 3 ? 'active' : ''}`}></span>
+        {step === 2 ? (
+          <>
+            <span className={`dot ${step === 0 ? 'active' : 'done'}`}></span>
+            <span className={`dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 3 ? 'active' : ''}`}></span>
+          </>
+        ) : (
+          <>
+            <span className={`dot ${step === 0 ? 'active' : step > 0 ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 1 ? 'active' : step > 1 ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 4 ? 'active' : step > 4 || step === 3 ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 3 ? 'active' : ''}`}></span>
+          </>
+        )}
       </div>
 
       <div id="steps">
@@ -1185,8 +1215,8 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
               <input type="text" placeholder="Company name" value={company} onChange={(e) => setCompany(e.target.value)} />
             </div>
             <div className="field" style={{ flex: 1 }}>
-              <label>Deal value ($)</label>
-              <input type="text" placeholder="600" value={dealValue} onChange={(e) => setDealValue(e.target.value)} />
+              <label>Source</label>
+              <input type="text" placeholder="e.g. LinkedIn, Email" value={source} onChange={(e) => setSource(e.target.value)} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
@@ -1216,20 +1246,52 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
               placeholder="Any context worth remembering..." 
               value={notes} 
               onChange={(e) => setNotes(e.target.value)} 
-              style={{ width: '100%', background: 'var(--panel-sunk)', border: '1px solid var(--border)', borderRadius: 'var(--radius-s)', color: 'var(--text-1)', padding: '0.6rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+              style={{ width: '100%', background: 'var(--panel-sunk)', border: '1px solid var(--border)', borderRadius: 'var(--radius-s)', color: 'var(--text-1)', padding: '0.6rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem' }}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.8rem', marginBottom: '1.2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>Trigger AI Extraction</span>
-              <span style={{ fontSize: '0.70rem', color: 'var(--text-3)' }}>Automatically extract structured data using LLM</span>
+              <span style={{ fontSize: '0.70rem', color: 'var(--text-2)' }}>Automatically extract structured data using LLM</span>
             </div>
             <Toggle on={shouldExtract} onChange={() => setShouldExtract(!shouldExtract)} />
           </div>
 
+          <button className="primary-btn" onClick={handleManualFormSubmit}>
+            Continue
+          </button>
+        </div>
+
+        {/* STEP 4: optional context window */}
+        <div className={`step ${step === 4 ? 'active' : ''}`}>
+          <div className="head-icon-wrap">
+            <div className="head-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="wizard-title">Add context</h1>
+          <p className="wizard-subtitle">Paste biography, LinkedIn profile, or email thread (Optional).</p>
+
+          <div className="field">
+            <label>Raw text / Context</label>
+            <textarea 
+              rows={8}
+              placeholder="Paste large copy/pasted bio or research here... AI extraction will extract additional info automatically." 
+              value={rawContext} 
+              onChange={(e) => setRawContext(e.target.value)} 
+              style={{ width: '100%', background: 'var(--panel-sunk)', border: '1px solid var(--border)', borderRadius: 'var(--radius-s)', color: 'var(--text-1)', padding: '0.6rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem' }}
+            />
+          </div>
+
           <button className="primary-btn" onClick={handleManualSave} disabled={loading}>
-            {loading ? 'Saving client...' : 'Save client'}
+            {loading ? 'Saving client...' : 'Save & continue'}
           </button>
         </div>
 
@@ -1316,6 +1378,7 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
         <div className="footer" style={{ marginTop: '22px', display: 'flex', justifyContent: 'space-between' }}>
           <button className="pill-btn" onClick={() => {
             if (step === 0) onCancel();
+            else if (step === 4) setStep(1);
             else setStep(0);
           }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
@@ -1323,12 +1386,21 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
             </svg>
             Back
           </button>
-          <button className="pill-btn" onClick={onCancel}>
-            Skip
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+          {step === 4 ? (
+            <button className="pill-btn" onClick={handleManualSave} disabled={loading}>
+              Skip &amp; Save
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          ) : (
+            <button className="pill-btn" onClick={onCancel}>
+              Skip
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -1341,7 +1413,11 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
   const [role, setRole] = useState(contact.role || '');
   const [industry, setIndustry] = useState(contact.industry || '');
   const [email, setEmail] = useState(contact.email || '');
-  const [score, setScore] = useState(contact.score || 50);
+  const [source, setSource] = useState(() => {
+    if (!contact.raw_dump) return '';
+    const match = contact.raw_dump.match(/Source:\s*([^\r\n]*)/i);
+    return match ? match[1].trim() : '';
+  });
   const [stage, setStage] = useState(contact.stage || 'New Lead');
   const [rawDump, setRawDump] = useState(contact.raw_dump || '');
   const [loading, setLoading] = useState(false);
@@ -1352,6 +1428,22 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
       return;
     }
     setLoading(true);
+
+    // Update the Source header inside raw_dump
+    let finalRawDump = rawDump;
+    const sourceRegex = /Source:\s*[^\r\n]*/i;
+    if (sourceRegex.test(finalRawDump)) {
+      if (source) {
+        finalRawDump = finalRawDump.replace(sourceRegex, `Source: ${source}`);
+      } else {
+        finalRawDump = finalRawDump.replace(sourceRegex, '').trim();
+      }
+    } else {
+      if (source) {
+        finalRawDump = `Source: ${source}\n\n${finalRawDump}`.trim();
+      }
+    }
+
     try {
       await onSave(contact.id, {
         name,
@@ -1359,9 +1451,9 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
         role,
         industry,
         email,
-        score: Number(score),
+        score: contact.score || 50,
         stage,
-        raw_dump: rawDump
+        raw_dump: finalRawDump
       });
     } catch (err) {
       console.error(err);
@@ -1434,8 +1526,8 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
           <input value={email} onChange={e => setEmail(e.target.value)} />
         </div>
         <div className="field">
-          <label>Engagement / Deal Score (1-100)</label>
-          <input type="number" min="1" max="100" value={score} onChange={e => setScore(e.target.value)} />
+          <label>Source</label>
+          <input placeholder="e.g. LinkedIn, Email" value={source} onChange={e => setSource(e.target.value)} />
         </div>
       </div>
 

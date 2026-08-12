@@ -9,13 +9,18 @@ export default function ProfileOutreach({
   onGenerateDraftInline,
   availableTones = [],
   onUpdateMessageOutcome,
-  onResyncMessage
+  onResyncMessage,
+  onSaveRawDump,
+  onReextractProfile
 }) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [generating, setGenerating] = useState(false);
   const [customInstruction, setCustomInstruction] = useState('');
   const [showInstruction, setShowInstruction] = useState(false);
+  const [contextUpdate, setContextUpdate] = useState('');
+  const [showContext, setShowContext] = useState(false);
+  const [savePermanently, setSavePermanently] = useState(true);
 
   const initialTone = contact.tone_note || (availableTones.length > 0 ? availableTones[0] : 'curiosity');
   const [selectedTone, setSelectedTone] = useState(initialTone);
@@ -27,12 +32,43 @@ export default function ProfileOutreach({
 
   const handleGenerate = async () => {
     setGenerating(true);
+    
+    // Check if we need to save context permanently
+    if (contextUpdate.trim()) {
+      if (savePermanently && onSaveRawDump) {
+        const divider = contact.raw_dump ? '\n\n' : '';
+        const updatedRawDump = (contact.raw_dump || '') + `${divider}Context Update:\n${contextUpdate.trim()}`;
+        try {
+          await onSaveRawDump(contact.id, updatedRawDump);
+          if (onReextractProfile) {
+            onReextractProfile(contact.id); // Trigger in background
+            addToast('ready', 'Context saved permanently. Updating profile in background...');
+          } else {
+            addToast('ready', 'Context saved permanently.');
+          }
+        } catch (err) {
+          console.error('Error saving raw dump:', err);
+          addToast('attn', 'Failed to save context permanently.');
+        }
+      }
+    }
+
     addToast('processing', 'Reading profile and drafting...');
     try {
-      const res = await onGenerateDraftInline(contact.id, selectedTone, customInstruction);
+      const instructionParts = [];
+      if (customInstruction.trim()) instructionParts.push(customInstruction.trim());
+      if (contextUpdate.trim()) {
+        instructionParts.push(`New customer context to incorporate: ${contextUpdate.trim()}`);
+      }
+      const combinedInstruction = instructionParts.join('\n');
+
+      const res = await onGenerateDraftInline(contact.id, selectedTone, combinedInstruction);
       setSubject(res.subject || '');
       setBody(res.body || '');
       addToast('ready', 'Email draft generated successfully.');
+      
+      // Clear quick context after generation so it doesn't get submitted twice
+      setContextUpdate('');
     } catch (err) {
       console.error('Inline draft generation error:', err);
       addToast('attn', 'Failed to generate email draft.');
@@ -72,7 +108,7 @@ export default function ProfileOutreach({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* SECTION A — Draft Composer */}
-      <Card glass={true} glow={false} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <Card style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div className="card-title">Outreach Draft Composer</div>
         
         {/* Row 1: Tone select and small "+ Add instruction" */}
@@ -139,6 +175,59 @@ export default function ProfileOutreach({
                 fontFamily: 'inherit'
               }}
             />
+          </div>
+        )}
+
+        {/* Separator / Second action: Context update button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.3rem' }}>
+          <button
+            type="button"
+            onClick={() => setShowContext(!showContext)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent)',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              padding: 0,
+              outline: 'none'
+            }}
+          >
+            {showContext ? '- Remove context update' : '+ Add context update'}
+          </button>
+        </div>
+
+        {/* Quick Context Update Textarea */}
+        {showContext && (
+          <div className="field" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-3)' }}>Quick Context Update</label>
+            <textarea
+              rows={2}
+              placeholder="e.g. they just hired a new CTO, or prefers direct communication. Appends to contact's permanent research dump."
+              value={contextUpdate}
+              onChange={(e) => setContextUpdate(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'var(--panel-sunk)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-s)',
+                color: 'var(--text-1)',
+                padding: '0.5rem',
+                fontSize: '0.8rem',
+                outline: 'none',
+                resize: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={savePermanently}
+                onChange={(e) => setSavePermanently(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              Save permanently to profile research dump (triggers background re-extraction)
+            </label>
           </div>
         )}
 

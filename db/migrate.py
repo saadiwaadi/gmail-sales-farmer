@@ -40,7 +40,10 @@ def run_migration():
         "context_cache": "TEXT",
         "memory_updated_at": "TEXT",
         "memory_version": "INTEGER DEFAULT 0",
-        "provider_used": "TEXT"
+        "provider_used": "TEXT",
+        "is_manually_overridden": "INTEGER DEFAULT 0",
+        "reminder_at": "TEXT",
+        "reminder_note": "TEXT"
     }
 
     for col_name, col_type in new_columns.items():

@@ -29,6 +29,10 @@ class MemoryUpdater:
             print(f"Error: Client ID {client_id} not found in database.")
             return False
 
+        if snapshot.get("is_manually_overridden"):
+            print(f"Skipping memory update for client '{snapshot['name']}' (manually overridden/locked).")
+            return True
+
         # Assemble new information section
         new_info = {
             "extracted_profile": snapshot["extracted_profile"],

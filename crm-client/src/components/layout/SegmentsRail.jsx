@@ -21,7 +21,7 @@ export default function SegmentsRail({
           <ChevronLeftIcon />
         </button>
       </div>
-      <div className="segments-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+      <div className="segments-list">
         {isPipeline ? (
           <>
             <button

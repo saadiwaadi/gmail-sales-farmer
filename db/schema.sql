@@ -13,7 +13,10 @@ CREATE TABLE IF NOT EXISTS clients (
   memory_version INTEGER DEFAULT 0,
   provider_used TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  is_manually_overridden INTEGER DEFAULT 0,
+  reminder_at TEXT,
+  reminder_note TEXT
 );
 
 CREATE TABLE IF NOT EXISTS messages (

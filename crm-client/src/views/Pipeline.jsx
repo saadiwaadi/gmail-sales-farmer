@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { addToast } from '../hooks/useToast';
+import Toggle from '../components/ui/Toggle';
 
 export default function Pipeline({
   kanbanData = {},
@@ -7,7 +8,8 @@ export default function Pipeline({
   activeSegment = 'all',
   onOpenContact,
   onEditContact,
-  onDeleteMultiple
+  onDeleteMultiple,
+  onToggleOverrideLock
 }) {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -124,18 +126,63 @@ export default function Pipeline({
         </div>
       </div>
 
+      {/* Unified Fixed Header */}
+      <div 
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '2fr 1.2fr 1.6fr 1.2fr 2.4fr 1.2fr 1.2fr 0.6fr', 
+          gap: '1rem', 
+          alignItems: 'center', 
+          padding: '10px 24px', 
+          marginBottom: '8px', 
+          borderBottom: '1px solid #1e231f',
+          color: 'var(--text-3)',
+          fontSize: '0.72rem',
+          fontWeight: '700',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontFamily: 'var(--mono)',
+          position: 'sticky',
+          top: '-24px',
+          background: '#000',
+          zIndex: 10
+        }}
+      >
+        <div>Name</div>
+        <div>Stage</div>
+        <div>Company Name</div>
+        <div>Role</div>
+        <div>Mail</div>
+        <div>Source</div>
+        <div>Automation</div>
+        <div></div> {/* Actions column - empty header */}
+      </div>
+ 
       <div className="flex flex-col gap-3 w-full" id="kanbanBoard">
         {filteredDeals.map((deal, idx) => {
           const contact = contactsList.find(c => c.name === deal.name) || {};
           const contactId = deal.id || contact.id;
           const isSelected = selectedIds.has(contactId);
+          
+          const getContactSource = (rawDump) => {
+            if (!rawDump) return '—';
+            const match = rawDump.match(/Source:\s*([^\r\n]*)/i);
+            return match ? match[1].trim() : '—';
+          };
 
           return (
             <div
               key={idx}
-              className={`group cursor-pointer bg-white/5 border border-white/10 rounded-xl backdrop-blur-md flex items-center justify-between w-full gap-4 px-6 py-4 transition-all hover:bg-white/10 ${
+              className={`group cursor-pointer bg-[#111411] border border-[#1e231f] rounded-[18px] w-full transition-all hover:border-[#1c5a41] hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.3)] ${
                 isSelected ? 'border-red-500/50 bg-red-500/5' : ''
               }`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1.2fr 1.6fr 1.2fr 2.4fr 1.2fr 1.2fr 0.6fr',
+                gap: '1rem',
+                alignItems: 'center',
+                padding: '14px 24px'
+              }}
               onClick={() => {
                 if (selectMode) {
                   handleToggleSelect(contactId);
@@ -144,69 +191,67 @@ export default function Pipeline({
                 }
               }}
             >
-              {/* Left Column: Checkbox & Name */}
-              <div className="flex items-center gap-3 min-w-0 flex-shrink-0" style={{ width: '180px' }}>
+              {/* Left Column: Checkbox & Name (Left-aligned) */}
+              <div className="flex items-center gap-3 min-w-0">
                 {selectMode && (
                   <input 
                     type="checkbox" 
                     checked={isSelected}
                     onChange={() => handleToggleSelect(contactId)}
                     onClick={(e) => e.stopPropagation()} 
-                    className="accent-red-500 cursor-pointer h-4 w-4 rounded border-gray-300"
+                    className="accent-red-500 cursor-pointer h-4 w-4 rounded border-gray-300 flex-shrink-0"
                   />
                 )}
-                <span className="text-white font-semibold text-sm truncate select-none">
+                <span className="text-white font-semibold text-sm truncate select-none" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {deal.name}
+                  {contact.is_manually_overridden ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px', color: 'var(--amber)', flexShrink: 0 }} title="Manual Override Active">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  ) : null}
                 </span>
               </div>
 
-              {/* Middle Columns: Stage, Company, Role, Email */}
-              <div className="flex items-center justify-between flex-1 min-w-0 gap-6">
-                {/* Stage */}
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Stage:</span>
-                  <span className="text-white text-xs truncate font-medium">
-                    {deal.stage || '—'}
-                  </span>
-                </div>
-
-                {/* Company */}
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Co:</span>
-                  <span className="text-white text-xs truncate font-medium">
-                    {contact.company || '—'}
-                  </span>
-                </div>
-
-                {/* Role */}
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Role:</span>
-                  <span className="text-gray-300 text-xs truncate">
-                    {contact.role || '—'}
-                  </span>
-                </div>
-
-                {/* Email */}
-                <div className="flex items-center gap-2 min-w-0 flex-[1.5]">
-                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider flex-shrink-0">Email:</span>
-                  <span className="text-gray-300 text-xs truncate">
-                    {contact.email || '—'}
-                  </span>
-                </div>
+              {/* Stage (Left-aligned) */}
+              <div className="text-white text-xs truncate font-medium">
+                {deal.stage || '—'}
               </div>
 
-              {/* Right Column: Score & Action Button */}
-              <div className="flex items-center gap-4 flex-shrink-0">
-                {/* Score */}
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">Score:</span>
-                  <span className="text-emerald-400 font-bold text-xs font-mono">
-                    {contact.score || '—'}
-                  </span>
-                </div>
+              {/* Company Name (Left-aligned) */}
+              <div className="text-white text-xs truncate font-medium">
+                {contact.company || '—'}
+              </div>
 
-                {/* Edit Button */}
-                {!selectMode && (
+              {/* Role (Left-aligned) */}
+              <div className="text-gray-300 text-xs truncate">
+                {contact.role || '—'}
+              </div>
+
+              {/* Mail (Left-aligned) */}
+              <div className="text-gray-300 text-xs truncate">
+                {contact.email || '—'}
+              </div>
+
+              {/* Source (Left-aligned) */}
+              <div className="text-gray-300 text-xs truncate">
+                {getContactSource(contact.raw_dump)}
+              </div>
+
+              {/* Automation (Left-aligned) */}
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <span style={{ fontSize: '11px', color: contact.is_manually_overridden ? 'var(--text-3)' : 'var(--accent)' }}>
+                  {contact.is_manually_overridden ? 'Paused' : 'Active'}
+                </span>
+                <Toggle 
+                  on={!contact.is_manually_overridden} 
+                  onChange={() => onToggleOverrideLock(contactId, !contact.is_manually_overridden)}
+                />
+              </div>
+
+              {/* Edit Button (Extreme right dedicated column) */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {!selectMode ? (
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -220,6 +265,8 @@ export default function Pipeline({
                       <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   </button>
+                ) : (
+                  <div style={{ width: '26px' }}></div>
                 )}
               </div>
             </div>

@@ -27,14 +27,19 @@ def run_extraction(client_id):
     cursor = conn.cursor()
 
     # Get client raw dump
-    cursor.execute("SELECT name, company, raw_dump FROM clients WHERE id = ?", (client_id,))
+    cursor.execute("SELECT name, company, raw_dump, is_manually_overridden FROM clients WHERE id = ?", (client_id,))
     row = cursor.fetchone()
     if not row:
         print(f"Error: Client with ID {client_id} not found in database.")
         conn.close()
         sys.exit(1)
 
-    name, company, raw_dump = row
+    name, company, raw_dump, is_manually_overridden = row
+    if is_manually_overridden:
+        print(f"Skipping profile extraction for client '{name}' (manually overridden/locked).")
+        conn.close()
+        sys.exit(0)
+
     if not raw_dump or not raw_dump.strip():
         print(f"Error: Raw dump for client '{name}' ({company}) is empty. Cannot extract profile.")
         conn.close()

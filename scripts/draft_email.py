@@ -48,6 +48,10 @@ def run_draft(client_id, tone, instruction=None):
         print(f"Error: Client with ID {client_id} not found in database.")
         sys.exit(1)
 
+    if snapshot.get("is_manually_overridden"):
+        print(f"Skipping draft generation for client '{snapshot['name']}' (manually overridden/locked).")
+        sys.exit(0)
+
     if not snapshot["extracted_profile"]:
         print(f"Error: Structured profile for client '{snapshot['name']}' has not been extracted yet.")
         print(f"Please run: python main.py extract {client_id}")
