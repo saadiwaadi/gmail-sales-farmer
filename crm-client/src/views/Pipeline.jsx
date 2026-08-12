@@ -135,7 +135,7 @@ export default function Pipeline({
           alignItems: 'center', 
           padding: '10px 24px', 
           marginBottom: '8px', 
-          borderBottom: '1px solid #1e231f',
+          borderBottom: '1px solid var(--card-glass-border)',
           color: 'var(--text-3)',
           fontSize: '0.72rem',
           fontWeight: '700',
@@ -144,7 +144,8 @@ export default function Pipeline({
           fontFamily: 'var(--mono)',
           position: 'sticky',
           top: '-24px',
-          background: '#000',
+          background: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(12px)',
           zIndex: 10
         }}
       >
@@ -173,7 +174,7 @@ export default function Pipeline({
           return (
             <div
               key={idx}
-              className={`group cursor-pointer bg-[#111411] border border-[#1e231f] rounded-[18px] w-full transition-all hover:border-[#1c5a41] hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.3)] ${
+              className={`group cursor-pointer surface-card w-full transition-all hover:border-[#1c5a41] hover:-translate-y-0.5 ${
                 isSelected ? 'border-red-500/50 bg-red-500/5' : ''
               }`}
               style={{
