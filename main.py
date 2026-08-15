@@ -12,6 +12,7 @@ from db.migrate import run_migration
 from scripts.extract_profile import run_extraction
 from scripts.draft_email import run_draft
 from core.memory_updater import MemoryUpdater
+from scripts.scrape_profile import run_profile_scrape
 
 def get_db_path():
     env_db = os.environ.get("DB_PATH")
@@ -141,6 +142,10 @@ def main():
     parser_memory = subparsers.add_parser("update-memory", help="Manually run the memory compression update")
     parser_memory.add_argument("client_id", type=int, help="ID of the client to update memory for")
     
+    # scrape-profile command
+    parser_scrape = subparsers.add_parser("scrape-profile", help="Scrape/parse profile data from a text file path")
+    parser_scrape.add_argument("file_path", help="Path to text file containing raw copy-pasted data")
+    
     args = parser.parse_args()
     
     if args.command == "add-client":
@@ -155,6 +160,8 @@ def main():
         db_path = get_db_path()
         updater = MemoryUpdater(db_path=db_path)
         updater.update_client_memory(args.client_id)
+    elif args.command == "scrape-profile":
+        run_profile_scrape(args.file_path)
 
 if __name__ == "__main__":
     main()

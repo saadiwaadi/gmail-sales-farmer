@@ -1,0 +1,10 @@
+{
+  "name": "",
+  "company": "Al Majd Dental Clinic",
+  "role": "",
+  "industry": "",
+  "email": "",
+  "phone": "",
+  "source": "",
+  "notes": "Business overview: Al Majd Dental Clinic operates in the  sector.\nMain offerings: Engineering, design, or specialized services.\nPeople/team structure: Managed by  ().\nCustomer/client journey: Initial inquiry, service delivery, and follow-up.\nRepeated themes: Focus on efficiency, team expertise, and client care.\nRelevant operational signals: Technical stability and delivery processes.\nStrongest personalization angle: Address how their team can optimize  workflows.\nPossible software/service connection: API integrations and custom support.\nConfidence level: High\nThings to avoid: Generic templates or reference to unrelated operations."
+}

@@ -1,4 +1,5 @@
 import os
+import sys
 import sqlite3
 
 def run_migration():
@@ -8,9 +9,9 @@ def run_migration():
     schema_path = os.path.join(db_dir, "schema.sql")
 
     if not os.path.exists(db_path):
-        print("Database not found. Initializing database from schema...")
+        print("Database not found. Initializing database from schema...", file=sys.stderr)
         if not os.path.exists(schema_path):
-            print(f"Error: schema.sql not found at {schema_path}")
+            print(f"Error: schema.sql not found at {schema_path}", file=sys.stderr)
             return False
         with open(schema_path, "r", encoding="utf-8") as f:
             schema_sql = f.read()
@@ -19,10 +20,10 @@ def run_migration():
         cursor.executescript(schema_sql)
         conn.commit()
         conn.close()
-        print("Database created and initialized successfully.")
+        print("Database created and initialized successfully.", file=sys.stderr)
         return True
 
-    print("Database found. Running migrations...")
+    print("Database found. Running migrations...", file=sys.stderr)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -48,7 +49,7 @@ def run_migration():
 
     for col_name, col_type in new_columns.items():
         if col_name not in columns:
-            print(f"Adding column '{col_name}' to 'clients' table...")
+            print(f"Adding column '{col_name}' to 'clients' table...", file=sys.stderr)
             cursor.execute(f"ALTER TABLE clients ADD COLUMN {col_name} {col_type}")
 
     # Ensure llm_logs table exists
@@ -77,7 +78,7 @@ def run_migration():
 
     conn.commit()
     conn.close()
-    print("Database migrations applied successfully.")
+    print("Database migrations applied successfully.", file=sys.stderr)
     return True
 
 if __name__ == "__main__":

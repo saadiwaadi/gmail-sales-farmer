@@ -69,9 +69,13 @@ def build_prompt(
     for k, v in task_variables.items():
         placeholder = f"{{{k}}}"
         # If placeholder wasn't in original skill template, append it as context
-        if placeholder not in skill_template and k != "raw_dump":
-            val_str = json.dumps(v, indent=2) if isinstance(v, (dict, list)) else str(v)
-            extra_context_parts.append(f"{k.upper()}: {val_str}")
+        if placeholder not in skill_template:
+            if k == "raw_dump":
+                if v and str(v) not in skill_template:
+                    extra_context_parts.append(f"RAW PROFILE TEXT:\n{v}")
+            else:
+                val_str = json.dumps(v, indent=2) if isinstance(v, (dict, list)) else str(v)
+                extra_context_parts.append(f"{k.upper()}: {val_str}")
             
     if extra_context_parts:
         extra_block = "CURRENT TASK VARIABLES:\n" + "\n".join(extra_context_parts)

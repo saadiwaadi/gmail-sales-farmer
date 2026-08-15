@@ -1002,6 +1002,12 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
   const [rawContext, setRawContext] = useState('');
   const [shouldExtract, setShouldExtract] = useState(true);
   
+  // Step 5: Scrape Account Fields
+  const [role, setRole] = useState('Client');
+  const [industry, setIndustry] = useState('');
+  const [scrapeText, setScrapeText] = useState('');
+  const [scraping, setScraping] = useState(false);
+  
   // Step 2: File Import State
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -1038,7 +1044,8 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
       await onCreate({
         name,
         company,
-        role: 'Client', // Default role
+        role: role || 'Client',
+        industry: industry || '',
         email,
         raw_dump: rawDump,
         score: 50,
@@ -1048,6 +1055,46 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
       setStep(3); // success step
     } catch (err) {
       setLoading(false);
+    }
+  };
+
+  const handleScrapeSubmit = async () => {
+    if (!scrapeText || !scrapeText.trim()) {
+      addToast('attn', 'Please paste some text to scrape.');
+      return;
+    }
+    setScraping(true);
+    try {
+      const response = await fetch('/api/contacts/scrape-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: scrapeText })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze text.');
+      }
+      
+      const fields = data.data;
+      setName(fields.name || '');
+      setCompany(fields.company || '');
+      setRole(fields.role || 'Client');
+      setIndustry(fields.industry || '');
+      setEmail(fields.email || '');
+      setPhone(fields.phone || '');
+      setSource(fields.source || '');
+      setNotes(fields.notes || '');
+      setRawContext(scrapeText);
+      
+      addToast('ready', 'Gemini successfully parsed and pre-filled the contact details.');
+      setStep(1); // Transition to manual review
+    } catch (err) {
+      console.error(err);
+      addToast('attn', err.message || 'Failed to analyze profile.');
+    } finally {
+      setScraping(false);
     }
   };
 
@@ -1108,9 +1155,9 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
           </>
         ) : (
           <>
-            <span className={`dot ${step === 0 ? 'active' : step > 0 ? 'done' : ''}`}></span>
-            <span className={`dot ${step === 1 ? 'active' : step > 1 ? 'done' : ''}`}></span>
-            <span className={`dot ${step === 4 ? 'active' : step > 4 || step === 3 ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 0 ? 'active' : 'done'}`}></span>
+            <span className={`dot ${step === 1 || step === 5 ? 'active' : (step === 4 || step === 3) ? 'done' : ''}`}></span>
+            <span className={`dot ${step === 4 ? 'active' : step === 3 ? 'done' : ''}`}></span>
             <span className={`dot ${step === 3 ? 'active' : ''}`}></span>
           </>
         )}
@@ -1151,16 +1198,17 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
             </div>
           </div>
 
-          <div className="option-row" onClick={() => setStep(1)}>
-            <div className="row-ico">
+          <div className="option-row" onClick={() => setStep(5)}>
+            <div className="row-ico" style={{ color: 'var(--accent)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>
             </div>
             <div className="row-text">
-              <div className="t">Import contact</div>
-              <div className="s">Pull details from a saved contact</div>
+              <div className="t">Scrape account</div>
+              <div className="s">Extract details from copy-pasted text using AI</div>
             </div>
             <div className="row-arrow">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -1217,6 +1265,16 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
             <div className="field" style={{ flex: 1 }}>
               <label>Source</label>
               <input type="text" placeholder="e.g. LinkedIn, Email" value={source} onChange={(e) => setSource(e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Role</label>
+              <input type="text" placeholder="e.g. VP of Engineering" value={role} onChange={(e) => setRole(e.target.value)} />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Industry</label>
+              <input type="text" placeholder="e.g. SaaS, Logistics" value={industry} onChange={(e) => setIndustry(e.target.value)} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
@@ -1292,6 +1350,34 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
 
           <button className="primary-btn" onClick={handleManualSave} disabled={loading}>
             {loading ? 'Saving client...' : 'Save & continue'}
+          </button>
+        </div>
+
+        {/* STEP 5: Scrape Account (Gemini AI Extraction) */}
+        <div className={`step ${step === 5 ? 'active' : ''}`}>
+          <div className="head-icon-wrap">
+            <div className="head-icon" style={{ background: 'rgba(91, 141, 239, 0.15)', color: '#5B8DEF' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="wizard-title">Scrape account</h1>
+          <p className="wizard-subtitle">Paste a LinkedIn bio, resume, biography, or conversation history below. Gemini will sort and pre-fill the details.</p>
+
+          <div className="field">
+            <label>Raw Copy-Pasted Account Data</label>
+            <textarea 
+              rows={8}
+              placeholder="Paste LinkedIn profile text, bio, or email dump here..." 
+              value={scrapeText} 
+              onChange={(e) => setScrapeText(e.target.value)} 
+              style={{ width: '100%', background: 'var(--panel-sunk)', border: '1px solid var(--border)', borderRadius: 'var(--radius-s)', color: 'var(--text-1)', padding: '0.6rem', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem' }}
+            />
+          </div>
+
+          <button className="primary-btn" onClick={handleScrapeSubmit} disabled={scraping}>
+            {scraping ? 'Analyzing with Gemini...' : 'Analyze & Populate'}
           </button>
         </div>
 
@@ -1379,6 +1465,8 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
           <button className="pill-btn" onClick={() => {
             if (step === 0) onCancel();
             else if (step === 4) setStep(1);
+            else if (step === 5) setStep(0);
+            else if (step === 1 && scrapeText) setStep(5);
             else setStep(0);
           }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>

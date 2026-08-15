@@ -27,8 +27,12 @@ def load_skill(path: str, **variables) -> str:
     with open(skill_path, "r", encoding="utf-8") as f:
         content = f.read()
         
-    try:
-        return content.format(**variables)
-    except KeyError as ke:
-        print(f"[Warning] Missing formatting key when loading skill '{path}': {ke}")
-        raise ke
+    # Safe interpolation that doesn't break on unescaped JSON curly braces
+    for k, v in variables.items():
+        placeholder = f"{{{k}}}"
+        if placeholder in content:
+            content = content.replace(placeholder, str(v))
+            
+    # Replace escaped braces {{ -> { and }} -> } for backward compatibility
+    content = content.replace("{{", "{").replace("}}", "}")
+    return content

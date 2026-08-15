@@ -85,11 +85,12 @@ class GeminiProvider(BaseProvider):
         else:
             GeminiProvider._request_times.append(time.time())
 
-    def generate(self, prompt: str, json_mode: bool = False) -> str:
+    def generate(self, prompt: str, json_mode: bool = False, system_prompt: str = None) -> str:
         start_time = time.perf_counter()
         
         # 1. Prompt Caching Check
-        prompt_hash = hashlib.sha256(prompt.encode('utf-8')).hexdigest()
+        cache_input = (system_prompt or "") + "||" + prompt
+        prompt_hash = hashlib.sha256(cache_input.encode('utf-8')).hexdigest()
         cached_response = self._check_cache(prompt_hash)
         if cached_response is not None:
             print(f"[Cache Hit] Serving response from local prompt_cache for hash: {prompt_hash}")
@@ -113,11 +114,13 @@ class GeminiProvider(BaseProvider):
         
         for attempt in range(1, max_attempts + 1):
             try:
-                config = None
+                config_kwargs = {}
                 if json_mode:
-                    config = types.GenerateContentConfig(
-                        response_mime_type="application/json"
-                    )
+                    config_kwargs["response_mime_type"] = "application/json"
+                if system_prompt:
+                    config_kwargs["system_instruction"] = system_prompt
+
+                config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
                     
                 response = self.client.models.generate_content(
                     model=self.model_name,
