@@ -141,104 +141,115 @@ Output ONLY a valid JSON object. No preamble, no markdown fences, no explanation
 
 PROMPT:
 RAW PROFILE TEXT:
-This Dental Clinic for Doc. Salu is very nice and satisfying service, i came this clinic for two times already at 1st i removed my wisdom tooth and 2nd i came yesterday to remove my 3 teeth in same time but i feel satisfied and i like there …
-I had an excellent experience with Dr. Salu for my dental treatment. From the first consultation to the completion of my treatment, Dr. Salu was professional, caring, and attentive. Every procedure was explained clearly, which made me feel …
-We had a very good experience with the dentist during my child’s dental extraction. Dr salu was extremely kind, patient, and gentle, which made my child feel calm and comfortable. The procedure was explained clearly in simple words, so both …
-I visited  Dr Salu for a tooth filling, and the entire experience was very reassuring. The dentist carefully examined the tooth and clearly explained the type of filling needed and each step of the procedure before starting. …
-It's officially THE best dental clinic I've ever been to. Dr.salu is so kind, light handed,gentle and patient. And the staff are sweet. And the services are the best. I've got one of my grinders done there and all the pain and headaches …
-I recently had the pleasure of visiting Dr. Salu for a wisdom tooth removal, and I cannot recommend him highly enough. From start to finish, the entire experience was incredibly smooth and professional. …
-"⭐⭐⭐⭐⭐ Exceptional Care at Al Majd Dental Clinic!
-I recommend this clinic 101%! Dr. Salu is incredibly professional and accommodating. He clearly explained the treatment plan and chose what was best for my …"
-Dr Salu and his team is doing a great job in dental treatment..I had experience from this clinic for my dental treatment, which was a complicated issue. Though it was much time consuming procedure because of its complexity, he did it …
-"""Al Majd Dental Clinic is our new go-to Family Dental Clinic.
-If you’re looking for a clinic that actually cares about its patients, this is it. …"
-My experience with Dr. Salu was excellent. He is highly precise in his work, pays great attention to detail, and performs his duties with sincerity and professionalism. …
-Highly Recommended Dr Salu 👍 one of the best dentist i ever met due to his professional skills i am able to smile again in life very economical in price i tried so many doctors but he is best as a dentist and human being as well….. …
-"""I was really worried at first because my teeth were in bad shape. That’s when a friend suggested this clinic. The treatment was excellent, and the doctors were very friendly. Plus, the clinic is exceptionally clean and well-maintained."""
-I went to Doc. Salu for treatment for my teeth.I am very happy with his work ,very professional and also price is also very reasonable. I will definitely recommend my friends and family without any hesitation. He explained everything very clearly about the procedure. Thank you very much Dr.
-I had a great experience at this dental clinic. I had multiple teeth infections, and after visiting other dentists without success, Dr. Salu was able to treat my case properly. He is very skilled, gentle, and professional. The clinic is clean, and the staff is friendly. Highly recommended!
-Did my root canal treatment from here , great service from doctors . Explains each and every procedure which makes the patient more comfortable . 👌👌 …
-I recently took my younger brother for his dental check-up, and I must say, it was an outstanding experience from start to finish. …
-She had been suffering from gum pain, and she had a tooth that needed a root canal treatment, as well as tartar removal. The doctor treated all of this and gave her medication for her gums. This is the before and after. Now, after three weeks, she no longer feels any pain.
-Excellent treatment and service! Dr. Salu is attentive, professional, and truly cares about patients’ wellbeing. Highly recommend Dr. Salu. Definitely a five-star experience!
-It was the best dental treatment among all. Start from the beginning to the end. Appointment was exactly on time. Dr. Salu is highly experienced dentist. His experience reflected on his professional work. I went for teeth cleaning and tooth …
-Dr. Salu and his team provided me with excellent dental care, including a dental filling. From the moment I arrived, the staff was friendly and efficient. Dr. Salu's expertise was evident as he explained the procedure and ensured my comfort …
-The doctors here are very good, they treat their patients very lovingly and they have very good morals and do their work with integrity.To all the people who are reading, watching and listening to my message, I will tell them that anyone …
-I visited the dental clinic recently and was very impressed. The clinic is clean, well-organized, and has a comfortable atmosphere. Dr. Salu was very supportive, and the nurse was also kind and professional. …
-Thank you, Dr. Salu, for your excellent care, and thanks to your assistant as well. You truly work from the heart to keep my teeth looking natural.” 🦷✨ …
-I recently visited AL MAJD DENTAL CLINIC for a surgical tooth extraction, and I couldn't be more satisfied with the experience. From start to finish, the procedure was handled with great care and professionalism. The treatment was …
-I received very good service at the dental hospital, and the braces treatment was affordable 😊 ...
-"Best doctor, you feel so comfortable and reassured .
-Dentists were my biggest fear, but with Dr. Salu I had the best experience ever . …"
-"⭐️⭐️⭐️⭐️⭐️
-I had my wisdom tooth treated by Dr. Salum, and the experience was excellent. He was gentle, professional, and made the whole process quick and painless. Great dentist — highly recommended!"
-Dr salu is one of the best dentist I have consulted. The treatment was pain free, He had shown me the condition of my teeth and had explained each and every step during the treatment. The best part was that I got an outstanding dental …
-I visited AL MAJD Dental Clinic where Dr. Salu provided excellent dental care. His clear explanation and expert treatment made me extremely satisfied. Highly recommended
-I had the pleasure of visiting Al MAJD DENTAL CLINIC , it was an outstanding experience from start to finish . Dr, Salu provided me with exceptional dental care , and I am extremely satisfied with the results.
-Very happy with my dental treatment. The doctor Salu bro was professional and gentle. Thank you Salu bro 👍 …
-I had an amazing experience at Al Majd Dental Clinic. Dr. Salu was very professional, and I left feeling extremely satisfied with the treatment I received. I highly recommend visiting the clinic and asking for Dr. Salu, especially for …
-Excellent service from Dr. Salu and his team! The clinic is neat and well-organized. Dr. Salu is kind, skilled, and really makes patients feel at ease. Highly recommended
-Dr. Salu is hands down the most professional and reassuring dentist in Muscat. I've been to many places here for root canals and cleaning before, but this place was unbelievably good. …
-Last 3 days i get pain in my teeth and i feel sensation when i eat cold and food after that first i go to badr al samaa there is too much expensive then my friend told ur clinic details then i come yesterday in the evening time the service …
-Me and my friends go to Dr Salu clinic I went to have my tooth extracted. My friend make Cleaning teeth I highly recommend this dentist! doctor did everything very professionally. very experienced and very caring for patients. equipment is …
-I visited Al Majd Dental Clinic in Ghubra, Muscat while on a short trip from the U.S. Without an appointment, I was able to walk in and got seen after about 1.5 hours. Dr. Salu was excellent—he performed a deep dental cleaning and a tooth …
-I recently had the pleasure of visiting this dental clinic, and I must say, it was an outstanding experience from start to finish. The doctor and staff were incredibly friendly, making me feel comfortable and at ease throughout my visit. …
-Hello, I’m here to share my fantastic experience with Dr. Salu. I visited his clinic to have one of my teeth removed. He administered the anesthesia, and I didn’t feel a thing compared to the previous dentist I had. I had several questions …
-I just wanted to share my positive experience with my recent visit to the dentist. The doctor was excellent and made sure that I didn't feel any pain during the procedure. What's more, the doctor explained every step of the way, which made …
-The best place to get your dental jobs done. So professional and affordable price compare to other dental clinics. Highly recommended.
-"Friendly personnel.
-The doctor takes the time to do the job. I needed a root canal treatment, and he really made sure the tooth and the canals where thoroughly cleaned. …"
-Dr. Salu is very professional and was very patient with my TMJ condition during the fillings. I Recommend him for sure and already brought my sis too!
-Discovered this place in an emergency. Professional and friendly. I wish them all the best in their careers in Oman.
-I recently had my first dental cleaning appointment at this clinic, and I must say, I was thoroughly impressed. The doctor was fantastic - knowledgeable, gentle, and very informative about what was going on with my teeth. I was pleasantly …
-"""Exceptional care! Dr. Salu provided expert, compassionate service. Clear communication, pain-free procedures, and modern facilities ensured a comfortable experience. Highly recommend for personalized, professional dental care. Trustworthy and thorough!."
-I’ve had a root canal done here, referred a friend who did his here too. As well as had some additional work done. Without hesitation I would recommend  this dental clinic! I have always been treated superbly and paid a fair price for quality service! Thank you for accommodating me and taking good care of my dental needs.
-I recently visited Dr. Salu for my mother's tooth extraction and we had an good experience. My mother really liked him, he was very nice and made her feel comfortable throughout the procedure. The care and professionalism were top-notch. Highly recommend Dr. Salu for any dental needs.
-Dr salu is one of the best dentist I have consulted. He diagnosed the reason for my tooth pain and had   done root canal treatment in a painless manner. I was relieved and happy in his treatment. The fees for the treatment is very feasible …
-"This is one of the best dental clinics that I have visited so far.
-The way that Doc. Salu is treating is absolutely awesome.
-Removing a tooth is generally a fearful task for anyone but he did it so gently. …"
-Exceptional experience at AL MAJD DENTAL CLINIC for teeth filling! The staff was friendly, efficient, and professional. The dentist explained the procedure thoroughly and made me feel comfortable throughout. The filling was done quickly and painlessly, and the results were fantastic. Highly recommend this clinic for dental care!
-Excellent service at an affordable price. Thank you Dr.
-Had a great experience at al majd clinic! Dr. Salu and the support staff were professional and gentle, and the entire visit was smooth and comfortable. Highly recommend!
-I highly recommended this dentist Dr. Salu and staff. I'm so comfortable when I'm there. They are all so friendly and you feel you are a priority to them. He will take care of your teeth and bring back your beautiful smile again.. Well expert amd passionate dentist.
-I went to this dental clinic to have my tooth filled. At first I am a bit hesitant because my money is not enough. Dr. Salu explained the procedure in detail and told me that its all worth it. …
-I recently visited “AL MAJD DENTAL CLINIC“for a routine check-up and cleaning, and I would be more pleased with my experience.The waiting area was clean and comfortable, making me feel at ease right away. …
-Dr. Salu is a very professional and super helpful dentist . Highly meticulous and great quality of work. He is excellent with children and provides a thorough and soothing explanation. Therefore, I believe that Dr.Salu  can simply repair , any parent who is concerned about their child's tooth.
-I came to Dr Salu clinic recommended by one of my friends. My teeth never felt cleaner!!!! And it was a fraction of the price in other clinics in Muscat. I highly recommend this dentist! Professional, very experienced and extremely careful with his patients. Thanks!!
-Such an amazing experience with them, I've done a root canal procedure with them and it was marvelous! I've had such a bad experience with the procedure before and was expecting intense pain and suffering but Dr. Salu assured me that I had …
-I highly recommend Dr.salu for whoever looking for your dental treatment.He is well experienced and he thoroughly explains every step of the treatment procedure with me. …
-I have been to many dental clinics but I have never seen a dental clinic like this one…. …
-"Having an awesome experience after a single consultation is rare. ✨
-How does a teacher explain and empties a student's doubt? Here, The doctor Mr Shalu explained every single dot to drive me more clearly about the present …"
-Awesome service... Dr. Salu was really friendly and explained the things, like never before heard in similar way... So helpful information. Want to visit again same place for further any dental issues. Recommended for everyone, whoever seeking for best dental care. Thank you very much...
-Recently I visited the clinic, for my 6 years old child's treatment. My child had swelling and pain on the molar tooth. He was crying. Dr Salu understands and created a comfortable environment for him. Throughout the root canal treatment he …
-My husband and I both had dental work done with Dr Saloo and were extremely  happy with the treatment.  He was very kind and patient with us and I can honestly say that I have never received such efficient cleaning of my teeth. …
-I recently visited Dr. Salu for a wisdom tooth extraction, and I can't recommend him highly enough. I had been suffering from tooth pain for a while and assumed it was due to a root canal issue, but Dr. Salu conducted a thorough examination …
-I highly recommend this dental clinic. Dr. Salu and Saba are wonderful and truly place the patient’s comfort high on the priority list. The clinic is clean and is equipped with excellent technology. Dr. Salu talked me through the procedure, …
-Of all the hospital appointments and experiences I have had previously with other doctors in India and abroad, a visit to dental clinic at Muscat is worth mentioning. I had my first tooth extraction done here at this clinic. I also had a …
-Second visit in last 5 months to meet Dr.Salu for my wife's dental problem. She feels so comfortable after meeting the doctor and getting treated. Well explained about the concern to us and showed the status on the screen for us to better …
-I had a great experience at al Majd Dental Clinic, good facility. The procedure was painless, and I appreciated how the dentist explained each step of the process clearly. Their detailed procedure explanation helped alleviate any concerns I had. Overall, a positive and informative doctor and staffs. First option from now on
-I would recommend the clinic to all near and dear in Muscat as I have got an  exceptional dental treatment done by Dr. Salu. He dealt me in a very friendly and proffessional way. The treatment was pain free, He had shown me the condition of …
-Had gone to 2 multi-speciality hospitals and both suggested i needed a surgical extraction for my tooth,but Dr.Salu conducted a non surgical extraction which took less than 15minutes and at a very very affordable price. …
-Exceptional care and expertise! Dr. Salu and the team at Al Majid Dental are truly top-notch. From the moment I walked in, I felt welcomed and reassured. The office is modern and spotless, and the staff is incredibly friendly and …
-We visited this Dental clinic for dental issues, the Hospitality provided by Dr and Nurse were nice. They explained about the issues very clearly and precisely. They way handled the patient were very good. …
-I had an excellent experience with Dr. Salu for my root canal treatment. The entire process was smooth, pain-free, and handled with great care. Thanks Doctor.
-Excellent dentist! We were on holiday and had an emergency. We were able to come in the very next day and are very satisfied!
-The clinic was fantastic with great hospitality from Dr. Salu and the nurse as well. The treatment provided by them was superb and I have no issues with my teeth ever since. Highly recommend this clinic
-I recently had the pleasure of visiting the best dentist in town, and I must say that my experience was nothing short of exceptional. From the moment I walked into the practice until the completion of my treatment, I was impressed by the …
-"It's one of the best dentist clinic in Muscat
-Doctor is kind, assistant coool. We had tow times treatment and it was so smooth. Perfect time good price, Wi-Fi is available super clean. Don't hesitate to visit them any time u need any tooth treatment. Thanks team"
-I wanted to express my gratitude for the wonderful experience at Almajd dental clinic. Dr. Salu not only provided excellent care, but he also managed to ease my fears, making the visit much more comfortable. Thank you for your exceptional service ❤️❤️❤️
-I had visited Al majd clinic for second consultation for my wife as her half tooth was broken and other doctors suggested for the root canal. As root canal is always an last option so we thought to visit Al Mazd clinic based on my friend’s …
-I had very stress free experience. Some Doctors informed me that I should have a surgical impaction case on my upper molar. Dr. Salu told me I will remove this with ease. I really felt happy to do and he did as what he said. Thank you Doctor. And I will recommend my friends to you👍 …
-Best Dental Clinic. Doctor is very professional & polite and care a lot. Good Supporting staff too. Thanks a lot for quick assistance and painless treatment. Highly Recommended and reasonable price for your bright smile😃 …
-"It was a pleasant surprise to know that quality dental care existed within a hop step and a jump from my apartment building .
-On arrival to the clinic , the receptionist approached us pleasantly and the …"
-We went to see Dr. Salu for my sons treatment. He was very tentative and very gentle with him. He is really good with children. His after care is also very good, he checked up on him several times.
-On recommendation of my colleague, I paid a visit to Majid dental clinic and had an amazing experience. The dentist did the scaling with utmost care and made it sure that I must be super comfortable during the whole process. Gonna visit every 6 months as suggested.
-A good dental clinic prioritize patients comfort and satisfaction. I have a good service experience with them, thank so much Dr. salu.
-I visited Al Majd dental clinic with my daughter, The doctors very friendly ,well informed and explained whole procedure.great service with individual attention. Highly recommended their services..
-"I am really happy to share about Dr Salu
-he did my tooth filling.since10 year I was doing my filling but it was only simple filling.Reasonly my friend was suggested Dr Salu,his work is highly quality …"
-Amazing clinic, especially Dr. Salu. I had my teeth cleaning done here and the experience was excellent
+reviews	w8nwRe 2
+I had a wonderful experience at this dental clinic. Everything was excellent, from the service to the overall care. The doctor was amazing, professional, and very kind, and her assistant was also excellent and supportive. The clinic itself …	More
+I had a great experience at Asnan Lounge. The clinic is well organized, and the staff are extremely friendly and professional. From the moment I arrived, I felt welcomed and well taken care of. …	More
+"A premium dental clinic defined by outstanding service and sincere patient centered care.
+The reception led by Taha is warm well organized and reflects a high standard of …"	More
+I have a deep phobia of dentists. Dr. Fatma Al Amri always treats me with kindness and patience without compromising her diligence and competence. Her calm, grounded presence, explanation of each step of each procedure, regular pauses to …	More
+A distinguished dental center in terms of professionalism and quality of service. The staff is known for their warm welcome and courteous manner, which creates a sense of comfort and reassurance from the very first moment. …	More
+cannot recommend Dr. Fatma and the team at Asnan Lounge enough! I have always been terrified of the dentist, but Dr. Fatma completely changed that for me. She is incredibly smart, professional, and has such a soft hand—I didn’t feel a …	More
+I had the pleasure of visiting Asnan Lounge, specifically with Dr. Salwa Rasheed, who truly reflects the clinic’s professionalism and care. She treated my two children with patience, kindness, and gentle hands, making them feel completely …	More
+"It was my first visit to Asnan Lounge, and I started my treatment with Dr. Shahad. She was super kind and made me feel comfortable 🤍
+I loved the results and clearly understood my treatment plan. …"	More
+Great service and professionalism! The facility is well equipped! Dr.Mohammed really takes care of his patients and definitely will be a returning customer	More
+I have had a very great experience yesterday scaling & polishing my teeth at  Asnan lounge ,  I would like to appreciate all of the staff that I have met for their warm welcome & their professional treatment & off course for the free …	More
+Great experience and great work done by Dr. Fatma Al Amri, full process within the center was satisfying🫶🏼 couldn’t be more confident with my new smile, highly recommended! …	More
+Yesterday, I visited Asnan Lounge. The man at the reception was very friendly, welcomed me, and quickly completed my registration since it was my first visit. I had the best cleaning session with Dr. Reema❣️	More
+"A lovely place with a cheerful, friendly atmosphere. I felt immediately at ease.
+Doctor Fatma is not only a great professional but also extremely sympathetic. …"	More
+I had my first experience at Asnan Lounge with Dr. Fatma, and I am truly impressed! The service level exceeded my expectations as a dental clinic, and the results were simply outstanding. The team demonstrates an incredible attention to …	More
+My experience was amazing, and the care was abundant. Dr. Rima and her assistant were amazingly helpful, gentle, and, above all, professionally friendly. I am extremely satisfied with my experience for the third time. Also, the support from …	More
+I would 100% recommend asnan lounge. My clear braces journey has been incredible and I'm extremely happy with my results. Dr reema is seriously the best and she is very knowledgeable and kind. They are also very good with appointments and their booking system is easy and convenient. Overall pleased with the services provided!	More
+Today I took my 8 year old daughter for a tooth extraction , I was very pleased by the staff friendliness towards my daughter and how they made the experience as comfortable and painless as possible for her. …	More
+I am current having an outstanding experience with my dentist Dr. Reem and her assistant during my Invisalign treatment. From the initial consultation to the final adjustments, they are …	More
+"Dr. Fatma was the best with being thorough, kind, patient, and ensured I was comfortable while explaining every step of the procedure.
+I’ll definitely be returning for my next appointment!"	More
+I really feel comfortable while doing any procedure in Asnan Lounge. I think they deserve each riyal we are paying for as im sure everyone comes out from Asnan Lounge satisfied with the outcome and they do care a lot about their patients..	More
+I had a visit with Dr Salwa Al Maamari today for a cleanup and I’m thoroughly satisfied with my experience at Asnan Lounge. Dr Salwa was amazing and made sure I had all the info I needed and answered all of my questions. I asked her whether …	More
+Great service and excellent staff !	More
+the staff is so kind and helpful from the second you interact with the receptionist, dr. Salwa made sure to check in with me before any step no matter how small and explained everything so thoroughly. I had the worst anxiety for years …	More
+It’s my first experience with the clinic but I’m more than satisfied with it,   Dr Salwa Al Rasheed is one of the most experienced dentist I met ever,she is very patient with my daughter who was very anxious and she gave her the best …	
+Hands down best dentist, professional and make sure that you do everything clinical before anything cosmetic 👌🏼👌🏼👌🏼 …	More
+This is the second time I have deal with your clinic, and of course I will always come back. All the employees are extremely kind	More
+I wish i can give Dr.Reema more than 5 stars!! She is the BEST Dr i visit thank you for your kindness and your help ❤️❤️	More
+The best service with staff and dr. Mohammed his hand is very light and I didn’t feel any pain so far	More
+excellent welcoming warm and highly expert!	More
+One of the most great dental centres in Oman	More
+Good experience with a good doctor	
+I was never encouraged to visit dentists, but after hearing about heard Asnan Lounge I said I would try. I actually visited them and they were not disappointed me.	More
+Great location , great doctors , i would recommend to all my friends and family to visit them.	More
+I wish I could give them more than 5 stars!	
+Kind staff and professional doctors. If you visited the clinic once you will come back again in the future	More
+Great service and the doctors are awesome.	More
+The best dental clinic in Muscat,Accurate  appointments and professional doctors👏💙 …	More
+Fell in love with the place since I walked in, The staff are friendly and very caring.	
+Thank you for amazing service as usual	More
+The best dental clinic in Muscat	
+Very very professional doctors	
+Excellent service	More
+Perfect consultation🤍 …	
+One of the best	
+The Best  🤍 …	
+Dr. Mohammed is very professional, caring, and highly skilled. He has a very gentle touch and makes you feel comfortable throughout the treatment. He takes the time to explain everything and genuinely cares about his patients. Excellent work and great attention to detail. Truly the best dentist I’ve visited!	
+I had a wonderful experience at Asnan lounge. The dentist was professional, gentle, and very attentive throughout the entire treatment. Everything was explained clearly, which made me feel comfortable and reassured. …	More
+"I had a great experience with the entire team.
+
+Dr. Salwa Al Maamari was incredibly caring, from my teeth cleaning to the …"	More
+I had a great experience with Dr. Salwa. She was kind, professional, and made me feel comfortable throughout my visit. She explained everything clearly and took excellent care of me. Thank you, for the outstanding treatment. Highly recommended!	
+Great service. Professional team. Nice clean place and hospitality.	More
+It was a wonderful experience having my dental treatment with Dr. Rima	More
+"Honestly the best experience ever with Dr.Mohammed Ghadeer.
+
+I have zero pain tolerance and he was wonderful during my wisdom tooth removal …"	More
+Best experience with Dr.Reema  thank you for your efforts	More
+"Dr Reema one of the best doctors.
+
+I had an excellent experience with my dentist. They completely transformed my smile and made my teeth look so much better.💕🥺 …"	More
+I highly recommend Dr. Reema Al Mujaini. She is incredibly kind, gentle, and caring. From the very first appointment, she always made me feel comfortable and reassured, taking the time to explain everything with patience and kindness. …	More
+I cannot recommend Dr. Reema Al Mujaini enough. She is incredibly gentle, professional, and takes the time to ensure you are completely comfortable. Her attention to detail is unmatched, and the results exceeded my expectations.	More
+It’s the attention to detail and genuine care that make you return with complete confidence. Special thanks to Dr. Mohammed for saving my smile, and to his lovely assistant, Maymona, for her kindness and warm presence. …	More
+Great experience! Dr. Mohammed was so gentle and caring, I could barely feel his hands during the treatment. He explained every step of the procedure. The staff were lovely too. Definitely recommend this place	More
+I had an excellent experience with Dr. Reema Almujaini. She is highly skilled, and the entire procedure was so smooth that I barely felt a thing. The treatment was quick, comfortable, and my teeth feel great afterward. …	More
+Honestly, the clinic is absolutely excellent, from the staff to the amazing work ✨✨✨✨✨✨. We've started relying on them for dental work, and their treatment of my sister, who has special needs, was wonderful; she never felt afraid at all.	More
+The clinic is very nice, and the organization and reception are excellent. As for Dr. Mohammed, he is one of the best doctors I have ever dealt with. This is the first time I have stayed with a dentist and continued treatment with him, due …	More
+This clinic is always my first choice. Their service is excellent, and all the doctors are top-notch. Dr. Fatima, in particular, is someone I've been seeing for a long time. Her work is consistently outstanding; she explains everything …	More
+"My experience with Lounge Dental Clinic was wonderful, thank God.
+
+I embarked on a long journey with them from beginning to end, and throughout …"	More
+An excellent experience and superb organization. Dr. Fatima is very skilled and explained every detail clearly. The clinic is clean and comfortable, and the care shown to the patient is evident at every step.	More
+Honestly, my experience at the dental clinic was excellent. They take care of the patient from the first visit and explain every step clearly and comfortably. I had a dental bridge fitted there, and the result was more natural and …	More
+Kind and attentive to detail, I felt comfortable from my first visit ❤️ My experience with Dr. Salwa was wonderful. …	More
+The experience was more than excellent, the staff were kind, and Dr. Amer did a great job extracting the wisdom tooth in less than 15 minutes in a very professional manner. Thank you! 🤍 …	
+My loyalty to my clinic is boundless. Since its opening, it has been a trusted and exceptional place for me. This isn't mere flattery; it's a true reflection of its excellence in every aspect: as a clinic, with Omani doctors we are proud …	More
+Over 3 years with Dr. Mohammed. High quality and excellent care in orthodontics, cleaning, or treatment.	More
+A wonderful Omani team... Special thanks to Dr. Salwa for her kindness and sweet spirit... A fantastic experience and I will definitely continue my treatment with Asnan Lounge 💕💕 …	More
+One of the finest and best clinics in terms of service and work... A truly commendable effort, I wish them all the best and continued success.	More
+"A wonderful experience and the service was extremely professional.
+A very comfortable clinic."	More
+The worst dental clinic I've ever been to, and their prices are ridiculously high. …	More
+"A beautiful clinic with a wonderful staff.
+
+I had two children who had a thumb-sucking habit, and thankfully, Dr. Salwa was …"	More
+My experience with Dr. Salwa was more than wonderful. I was in excruciating pain, and firstly, the doctor, may God bless her, has a gentle touch. She performed a fantastic root canal treatment. I highly recommend the clinic. This is my …	More
+My dental cleaning experience there was wonderful, and Dr. Rima had a gentle touch; I didn't feel any pain at all. The clinic is excellent, and the staff is outstanding. ♥️♥️♥️♥️	More
+I am very happy with my choice of this clinic; the staff were very kind and helpful.	More
+Mashallah! We are proud of the Omani staff at Asnan Lounge Center. From their scientific expertise and meticulous organization in scheduling appointments, to the attentive reception of patients and the skillful treatment provided by the …	More
+Dr. Salwa specializes in treating children and offers painless treatment methods. She also has excellent interpersonal skills with children. …	More
+"I highly recommend Long Dental Center.
+
+The staff's service was excellent. The place was very clean and beautiful. I had …"	More
+Their service is generally excellent, but unfortunately, twice in a row they were half an hour late for my appointment. The reason was that a patient arrived late. It's very unfortunate that a clinic with Omani staff cannot adhere to the basics!	More
+I traveled all the way from Dubai to Muscat for them; their reputation precedes them, and they deserve all the best. They are ambitious and hardworking young Omanis. And without a doubt, they are the best dental clinic in Muscat and Oman.	More
+We wish the young Omanis success in their work. However, visitors should be informed of the prices before starting treatment. …	More
+"All the doctors are very skilled, God bless them.
+
+I recommend visiting Asnan Lounge for any dental procedure, whether it's treatment or cosmetic. 👏🏻 …"	More
+Dr. Salwa Al-Rashid, may God bless her... I didn't feel any pain and I was comfortable during and after the session. Even my family now only goes to her for consultations. 🤍🤍 …	More
+The staff is exceptional and their work is meticulous. They provide me with a step-by-step treatment plan before we begin anything, and their approach is very kind. I wish them all the best.	
+Honestly, this is the best clinic in Muscat, especially Dr. Salwa and her staff. …	More
+"This is one of the best dental clinics I've ever been to.
+
+I used to be afraid of dentists, but after dealing with the doctors at this …"	More
+The experience of getting your teeth cleaned was excellent with Dr. Fatima - she has a very light touch, God bless her.	More
+I had a filling done there and it fell out after an hour!!	More

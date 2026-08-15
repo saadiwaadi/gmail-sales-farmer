@@ -1,10 +1,10 @@
 {
   "name": "",
-  "company": "Al Majd Dental Clinic",
+  "company": "Asnan Lounge",
   "role": "",
-  "industry": "",
+  "industry": "Dental / Healthcare",
   "email": "",
   "phone": "",
-  "source": "",
-  "notes": "Business overview: Al Majd Dental Clinic operates in the  sector.\nMain offerings: Engineering, design, or specialized services.\nPeople/team structure: Managed by  ().\nCustomer/client journey: Initial inquiry, service delivery, and follow-up.\nRepeated themes: Focus on efficiency, team expertise, and client care.\nRelevant operational signals: Technical stability and delivery processes.\nStrongest personalization angle: Address how their team can optimize  workflows.\nPossible software/service connection: API integrations and custom support.\nConfidence level: High\nThings to avoid: Generic templates or reference to unrelated operations."
+  "source": "Google Maps",
+  "notes": "Business overview: A premium dental clinic located in Muscat, Oman, operated by a team of Omani dentists offering general, orthodontic, and pediatric dental services.\nMain offerings: Teeth cleaning (scaling and polishing), root canal treatment, tooth extraction, wisdom tooth removal, dental fillings, dental bridge, Invisalign, clear braces\nPeople/team structure: Multiple dentists mentioned by reviewers (Dr. Fatma Al Amri, Dr. Salwa Al Maamari / Al Rasheed, Dr. Reema / Rima Al Mujaini, Dr. Mohammed Ghadeer, Dr. Shahad, Dr. Amer). Taha and other staff handle reception and registration. Assistants like Maymona are also noted.\nCustomer/client journey: Patients book appointments, arrive at reception for registration, receive a step-by-step treatment plan and consultation before procedures, undergo treatment with ongoing check-ins, and return for follow-ups or long-term care.\nRepeated themes: Warm welcome from staff, dentists who explain procedures step-by-step, gentle touch for patients with dental phobia or anxiety, excellent care for children and special needs patients, accurate appointment scheduling.\nRelevant operational signals: Mention of an easy and convenient booking system by at least one patient, but also isolated complaints regarding appointment delays caused by late-arriving patients and pricing transparency.\nStrongest personalization angle: High volume of patient praise for dentists who carefully explain procedures to anxious patients, combined with established scheduling organization—though occasional scheduling bottlenecks from late arrivals occur.\nPossible software/service connection: Automated appointment reminder software, waitlist management tools, or automated patient pre-visit instructions to reduce tardiness impact.\nConfidence level: High\nThings to avoid: Assuming any specific dentist owns the clinic. Mentioning negative reviews as a systemic issue since they are isolated."
 }

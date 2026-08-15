@@ -1143,6 +1143,16 @@ export default function Contacts({
                 type="datetime-local"
                 value={reminderAt}
                 onChange={(e) => setReminderAt(e.target.value)}
+                onClick={(e) => {
+                  try {
+                    e.target.showPicker();
+                  } catch (err) {}
+                }}
+                onFocus={(e) => {
+                  try {
+                    e.target.showPicker();
+                  } catch (err) {}
+                }}
                 style={{
                   width: '100%',
                   background: 'rgba(255,255,255,0.03)',
@@ -1151,7 +1161,8 @@ export default function Contacts({
                   padding: '8px 12px',
                   color: '#fff',
                   fontSize: '13px',
-                  outline: 'none'
+                  outline: 'none',
+                  cursor: 'pointer'
                 }}
               />
             </div>

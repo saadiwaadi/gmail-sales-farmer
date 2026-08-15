@@ -24,6 +24,40 @@ import ImportWizard from './components/import/ImportWizard';
 
 import { addToast } from './hooks/useToast';
 
+function ThingsToAvoidCollapse({ value }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>
+          Things to avoid
+        </span>
+        <button 
+          onClick={() => setShow(!show)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--accent)',
+            fontSize: '0.75rem',
+            cursor: 'pointer',
+            padding: 0,
+            textDecoration: 'underline',
+            fontWeight: 600,
+            outline: 'none'
+          }}
+        >
+          {show ? 'Hide' : 'Show'}
+        </button>
+      </div>
+      {show && (
+        <div style={{ fontSize: '0.88rem', color: '#ffb3b3', lineHeight: '1.4', padding: '8px 12px', background: 'rgba(226, 88, 94, 0.08)', border: '1px solid rgba(226, 88, 94, 0.2)', borderRadius: '8px' }}>
+          {value}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [activeSegment, setActiveSegment] = useState('all');
@@ -225,6 +259,45 @@ export default function App() {
     setKanban(board);
   }, [contacts]);
 
+  // Inline edit states for Contact Detail Card
+  const lastInitializedContact = useRef(null);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [localLinks, setLocalLinks] = useState([]);
+  const [linksCollapsed, setLinksCollapsed] = useState(true);
+  const [linkedInInput, setLinkedInInput] = useState('');
+  const [addingCustomLink, setAddingCustomLink] = useState(false);
+  const [customPlatform, setCustomPlatform] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
+  
+  const [settingReminder, setSettingReminder] = useState(false);
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderNote, setReminderNote] = useState('');
+
+  useEffect(() => {
+    if (modal.type === 'contact-details' && modal.show) {
+      const c = contacts.find(x => x.name === modal.data);
+      if (c && lastInitializedContact.current !== c.id) {
+        setEmailInput(c.email || '');
+        const links = c.social_links || [];
+        setLocalLinks(links);
+        setLinksCollapsed(links.length === 0);
+        setReminderDate(c.reminder_at || '');
+        setReminderNote(c.reminder_note || '');
+        lastInitializedContact.current = c.id;
+        
+        setEditingEmail(false);
+        setLinkedInInput('');
+        setAddingCustomLink(false);
+        setCustomPlatform('');
+        setCustomUrl('');
+        setSettingReminder(false);
+      }
+    } else {
+      lastInitializedContact.current = null;
+    }
+  }, [modal.type, modal.show, modal.data, contacts]);
+
   // Handle density toggle layout adjustment
   useEffect(() => {
     if (densityCompact) {
@@ -246,7 +319,7 @@ export default function App() {
 
   const handleOpenContact = (name) => {
     setActiveContactName(name);
-    setSlideover({
+    setModal({
       show: true,
       type: 'contact-details',
       data: name
@@ -577,87 +650,712 @@ export default function App() {
     );
   };
 
-  // Contacts Detail Slide-over Body renderer
-  const renderContactDetailsSlideover = () => {
-    const contactName = slideover.data;
-    const c = contacts.find(x => x.name === contactName) || {
-      name: contactName,
-      type: "contact",
-      tag: "Active in pipeline",
-      email: "—",
-      score: "—",
-      stage: "—",
-      last: "—",
-      tone_note: null,
-      ai_status: "NOT_STARTED"
+  // Contacts Detail Card renderer
+  const renderContactDetailsCard = () => {
+    const contactName = modal.data;
+    const c = contacts.find(x => x.name === contactName);
+    if (!c) return null;
+
+    const handleSaveEmail = async () => {
+      if (!emailInput.trim()) return;
+      try {
+        const res = await api('PATCH', `/api/contacts/${c.id}`, {
+          email: emailInput.trim()
+        });
+        if (res.success) {
+          addToast('ready', 'Email updated successfully.');
+          setEditingEmail(false);
+          await loadContacts();
+        }
+      } catch (err) {
+        console.error(err);
+        addToast('attn', 'Failed to update email.');
+      }
     };
 
     const handleCopyEmail = () => {
+      if (!c.email) return;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(c.email).catch(() => {});
       }
-      addToast('ready', 'Copied to clipboard.');
+      addToast('ready', 'Copied email to clipboard.');
     };
 
-    return (
-      <div>
-        <div className="profile-name" style={{ fontSize: '1.4rem', fontFamily: 'var(--serif)', marginBottom: '0.4rem' }}>
-          {c.name}
+    const handleSaveLinks = async (updatedLinks) => {
+      try {
+        const res = await api('PATCH', `/api/contacts/${c.id}`, {
+          social_links: updatedLinks
+        });
+        if (res.success) {
+          setLocalLinks(updatedLinks);
+          await loadContacts();
+        }
+      } catch (err) {
+        console.error(err);
+        addToast('attn', 'Failed to save social links.');
+      }
+    };
+
+    const handleAddDefaultLinkedIn = async () => {
+      if (!linkedInInput.trim()) return;
+      const updated = [...localLinks, { platform: 'LinkedIn', url: linkedInInput.trim() }];
+      await handleSaveLinks(updated);
+      setLinkedInInput('');
+    };
+
+    const handleAddCustomLink = async () => {
+      if (!customPlatform.trim() || !customUrl.trim()) {
+        addToast('attn', 'Platform and URL are required.');
+        return;
+      }
+      const updated = [...localLinks, { platform: customPlatform.trim(), url: customUrl.trim() }];
+      await handleSaveLinks(updated);
+      setCustomPlatform('');
+      setCustomUrl('');
+      setAddingCustomLink(false);
+    };
+
+    const handleRemoveLink = async (indexToRemove) => {
+      const updated = localLinks.filter((_, idx) => idx !== indexToRemove);
+      await handleSaveLinks(updated);
+    };
+
+    const handleSaveReminder = async () => {
+      try {
+        const res = await api('PATCH', `/api/contacts/${c.id}`, {
+          reminder_at: reminderDate,
+          reminder_note: reminderNote
+        });
+        if (res.success) {
+          addToast('ready', 'Reminder scheduled successfully.');
+          setSettingReminder(false);
+          await loadContacts();
+        }
+      } catch (err) {
+        console.error(err);
+        addToast('attn', 'Failed to save reminder.');
+      }
+    };
+
+    const parseNotes = (notesText) => {
+      if (!notesText) return [];
+      const lines = notesText.split('\n');
+      const parsed = [];
+      lines.forEach(line => {
+        const colIdx = line.indexOf(':');
+        if (colIdx !== -1) {
+          const label = line.substring(0, colIdx).trim();
+          const value = line.substring(colIdx + 1).trim();
+          if (label && value) {
+            parsed.push({ label, value });
+          }
+        }
+      });
+      return parsed;
+    };
+
+    const renderParsedNotes = (notesText) => {
+      const items = parseNotes(notesText);
+      if (items.length === 0) {
+        return <div style={{ color: 'var(--text-3)', fontStyle: 'italic', fontSize: '0.85rem' }}>No research notes available.</div>;
+      }
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.6rem' }}>
+          {items.map((item, idx) => {
+            if (item.label.toLowerCase() === 'confidence level') {
+              const isHigh = item.value.toLowerCase() === 'high';
+              const isMedium = item.value.toLowerCase() === 'medium';
+              const badgeBg = isHigh ? 'rgba(63, 178, 127, 0.15)' : isMedium ? 'rgba(201, 162, 75, 0.15)' : 'rgba(255, 255, 255, 0.08)';
+              const badgeColor = isHigh ? '#3FB27F' : isMedium ? '#C9A24B' : 'var(--text-3)';
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>
+                    {item.label}
+                  </span>
+                  <span style={{
+                    background: badgeBg,
+                    color: badgeColor,
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700
+                  }}>
+                    {item.value}
+                  </span>
+                </div>
+              );
+            }
+
+            if (item.label.toLowerCase() === 'things to avoid') {
+              return (
+                <ThingsToAvoidCollapse key={idx} value={item.value} />
+              );
+            }
+
+            const isKeyHook = item.label.toLowerCase() === 'strongest personalization angle';
+
+            return (
+              <div 
+                key={idx} 
+                style={{
+                  paddingLeft: isKeyHook ? '10px' : '0',
+                  borderLeft: isKeyHook ? '3px solid rgba(63, 178, 127, 0.4)' : 'none',
+                  background: isKeyHook ? 'rgba(63, 178, 127, 0.02)' : 'none',
+                  paddingTop: isKeyHook ? '6px' : '0',
+                  paddingBottom: isKeyHook ? '6px' : '0'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700, marginBottom: '2px' }}>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: '0.88rem', color: 'var(--text-1)', lineHeight: '1.4' }}>
+                  {item.value}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div style={{ marginBottom: '0.8rem' }}>
+      );
+    };
+
+    const hasLinkedIn = localLinks.some(l => l.platform.toLowerCase() === 'linkedin');
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', color: '#fff', position: 'relative' }}>
+        
+        {/* X Close Button in top right */}
+        <button 
+          onClick={() => setModal({ show: false, type: null, data: null })}
+          style={{
+            position: 'absolute',
+            top: '-15px',
+            right: '-15px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-3)',
+            cursor: 'pointer',
+            padding: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            outline: 'none'
+          }}
+          title="Close"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <div className="head-icon-wrap" style={{ alignSelf: 'center', marginBottom: '0.2rem' }}>
+          <div className="head-icon" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 className="wizard-title" style={{ textAlign: 'center', margin: 0 }}>Client details</h1>
+        <p className="wizard-subtitle" style={{ textAlign: 'center', margin: '0 0 0.2rem', color: 'var(--text-3)' }}>
+          Profile and status overview for this contact.
+        </p>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+          <div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{c.name}</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-2)', marginTop: '2px' }}>
+              {c.role || 'No Role Specified'}
+            </div>
+          </div>
           <Badge status={c.ai_status} />
         </div>
-        <div className="profile-tag" style={{ fontSize: '0.85rem', color: 'var(--text-3)', marginBottom: '1.2rem' }}>
-          {c.tag}
-        </div>
 
-        <div className="kv-row"><span className="k">Stage</span><span>{c.stage}</span></div>
-        <div className="kv-row"><span className="k">Lead score</span><span>{c.score}</span></div>
-        <div className="kv-row"><span className="k">Last contact</span><span>{c.last}</span></div>
-        <div className="kv-row"><span className="k">Email</span><span>{c.email}</span></div>
-
-        <ToneSelect
-          contactName={c.name}
-          toneNote={c.tone_note}
-          onChange={handleToneChange}
-          availableTones={availableTones}
-        />
-
-        <div className="divider-label">
-          <span>Activity</span>
-          <div className="rule"></div>
-        </div>
-        <div className="timeline" style={{ marginBottom: '1.5rem' }}>
-          <div className="tl-item mint">
-            <div>
-              <div className="tl-text">Opened your last follow-up email</div>
-              <div className="tl-date">2 days ago</div>
+        {/* General Meta Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+            <div className="field">
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Company</label>
+              <div style={{ fontSize: '0.92rem', color: 'var(--text-1)', padding: '6px 0' }}>{c.company || '—'}</div>
+            </div>
+            <div className="field">
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Industry</label>
+              <div style={{ fontSize: '0.92rem', color: 'var(--text-1)', padding: '6px 0' }}>
+                {c.industry ? c.industry : <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>Not specified</span>}
+              </div>
             </div>
           </div>
-          <div className="tl-item">
-            <div>
-              <div className="tl-text">Viewed listing details, twice</div>
-              <div className="tl-date">4 days ago</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+            <div className="field">
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Stage / Status</label>
+              <div style={{ fontSize: '0.92rem', color: 'var(--text-1)', padding: '6px 0' }}>
+                <span style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid var(--border)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600
+                }}>
+                  {c.stage || 'Not Contacted'}
+                </span>
+              </div>
+            </div>
+            <div className="field">
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Last Contacted</label>
+              <div style={{ fontSize: '0.92rem', color: 'var(--text-1)', padding: '6px 0' }}>{c.last ? new Date(c.last).toLocaleDateString() : 'Never'}</div>
             </div>
           </div>
-          <div className="tl-item">
-            <div>
-              <div className="tl-text">Called — left voicemail</div>
-              <div className="tl-date">9 days ago</div>
-            </div>
+
+          {/* Email Field with manual Add & Clipboard Copy */}
+          <div className="field">
+            <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Email</label>
+            {c.email ? (
+              <div 
+                onClick={handleCopyEmail}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem', 
+                  color: 'var(--text-1)',
+                  marginTop: '4px'
+                }}
+              >
+                <span>{c.email}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-3)' }}>
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </div>
+            ) : (
+              <div>
+                {editingEmail ? (
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <input 
+                      type="email"
+                      placeholder="Enter email address"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      style={{
+                        flex: 1,
+                        background: 'var(--panel-sunk)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        color: 'var(--text-1)',
+                        padding: '6px 10px',
+                        fontSize: '0.85rem',
+                        outline: 'none'
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          await handleSaveEmail();
+                        }
+                      }}
+                    />
+                    <button 
+                      onClick={handleSaveEmail}
+                      style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', background: 'var(--accent)', color: '#000', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Save
+                    </button>
+                    <button 
+                      onClick={() => setEditingEmail(false)}
+                      style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No email on file</span>
+                    <button 
+                      onClick={() => {
+                        setEmailInput('');
+                        setEditingEmail(true);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--accent)',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Social / Links Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.8rem' }}>
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Social / Links</span>
+              <button 
+                onClick={() => setLinksCollapsed(!linksCollapsed)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent)',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textDecoration: 'underline'
+                }}
+              >
+                {linksCollapsed ? 'Expand' : 'Collapse'}
+              </button>
+            </div>
+
+            {!linksCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '4px 0' }}>
+                
+                {/* Default LinkedIn Input Row if not already added */}
+                {!hasLinkedIn && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', width: '80px', color: 'var(--text-2)', fontWeight: 600 }}>LinkedIn</span>
+                    <input 
+                      type="text"
+                      placeholder="+ Add URL"
+                      value={linkedInInput}
+                      onChange={(e) => setLinkedInInput(e.target.value)}
+                      style={{
+                        flex: 1,
+                        background: 'var(--panel-sunk)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--text-1)',
+                        padding: '4px 8px',
+                        fontSize: '0.82rem',
+                        outline: 'none'
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          await handleAddDefaultLinkedIn();
+                        }
+                      }}
+                    />
+                    <button 
+                      onClick={handleAddDefaultLinkedIn}
+                      style={{
+                        background: 'var(--accent)',
+                        border: 'none',
+                        color: '#000',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                )}
+
+                {/* Render Existing Links */}
+                {localLinks.map((link, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(255,255,255,0.01)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-2)' }}>{link.platform}</span>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-3)', wordBreak: 'break-all' }}>{link.url}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <a 
+                        href={link.url.startsWith('http') ? link.url : `https://${link.url}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center' }}
+                        title="Open Link"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </a>
+                      <button 
+                        onClick={() => handleRemoveLink(idx)}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                        title="Remove Link"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add Custom Link Input Row */}
+                {addingCustomLink ? (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
+                    <input 
+                      type="text"
+                      placeholder="Platform (e.g. X, Web)"
+                      value={customPlatform}
+                      onChange={(e) => setCustomPlatform(e.target.value)}
+                      style={{
+                        width: '100px',
+                        background: 'var(--panel-sunk)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--text-1)',
+                        padding: '4px 8px',
+                        fontSize: '0.82rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <input 
+                      type="text"
+                      placeholder="Paste URL"
+                      value={customUrl}
+                      onChange={(e) => setCustomUrl(e.target.value)}
+                      style={{
+                        flex: 1,
+                        background: 'var(--panel-sunk)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--text-1)',
+                        padding: '4px 8px',
+                        fontSize: '0.82rem',
+                        outline: 'none'
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          await handleAddCustomLink();
+                        }
+                      }}
+                    />
+                    <button 
+                      onClick={handleAddCustomLink}
+                      style={{
+                        background: 'var(--accent)',
+                        border: 'none',
+                        color: '#000',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button 
+                      onClick={() => setAddingCustomLink(false)}
+                      style={{
+                        background: 'none',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-2)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setAddingCustomLink(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent)',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '4px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginTop: '4px',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    + Add another link
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Inline Reminder Setup */}
+          {settingReminder && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', background: 'rgba(255,255,255,0.02)', padding: '12px', border: '1px solid var(--border)', borderRadius: '12px', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-2)' }}>Schedule Follow-up Reminder</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="datetime-local" 
+                  value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      e.target.showPicker();
+                    } catch (err) {}
+                  }}
+                  onFocus={(e) => {
+                    try {
+                      e.target.showPicker();
+                    } catch (err) {}
+                  }}
+                  style={{
+                    background: 'var(--panel-sunk)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    color: 'var(--text-1)',
+                    padding: '6px 8px',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Reminder notes (e.g. Call about dental CRM integration)"
+                value={reminderNote}
+                onChange={(e) => setReminderNote(e.target.value)}
+                style={{
+                  background: 'var(--panel-sunk)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  color: 'var(--text-1)',
+                  padding: '6px 8px',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button 
+                  className="primary-btn" 
+                  style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', background: 'var(--accent)', color: '#000', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                  onClick={handleSaveReminder}
+                >
+                  Save Reminder
+                </button>
+                <button 
+                  className="secondary-btn" 
+                  style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}
+                  onClick={() => setSettingReminder(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Parsed Notes / AI Synthesis Section */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.2rem' }}>
+            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700 }}>Research Notes</span>
+            {renderParsedNotes(c.notes || '')}
+          </div>
+
         </div>
 
-        <div className="btn-row" style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button variant="primary" onClick={() => handleOpenFollowup(c.name)}>
-            Generate follow-up
-          </Button>
-          <Button variant="outline" onClick={() => addToast('ready', `Call logged for ${c.name}.`)}>
-            Log call
-          </Button>
-          <Button variant="ghost" onClick={handleCopyEmail}>
-            Copy email
-          </Button>
+        {/* Bottom Action Strip */}
+        <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.8rem', width: '100%', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+          <button 
+            className="primary-btn" 
+            style={{ 
+              flex: 1.5, 
+              padding: '12px', 
+              background: '#3FB27F', 
+              borderColor: '#3FB27F', 
+              color: '#000', 
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+            onClick={async () => {
+              setModal({ show: false, type: null, data: null });
+              await handleOpenEmailComposer(c.name);
+            }}
+          >
+            Generate Draft
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              flex: 1, 
+              padding: '12px', 
+              background: 'none', 
+              border: '1px solid var(--border)', 
+              color: 'var(--text-1)', 
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem'
+            }}
+            onClick={() => setSettingReminder(true)}
+          >
+            Set Reminder
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              flex: 1, 
+              padding: '12px', 
+              background: 'none', 
+              border: '1px solid var(--border)', 
+              color: 'var(--text-1)', 
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem'
+            }}
+            onClick={() => setModal({ show: true, type: 'edit-contact', data: c })}
+          >
+            Edit
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              flex: 0.9, 
+              padding: '12px', 
+              background: 'rgba(239, 68, 68, 0.05)', 
+              border: '1px solid rgba(239, 68, 68, 0.3)', 
+              color: '#ef4444', 
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+            onClick={() => setModal({ show: true, type: 'edit-contact', data: c, startWithDeleteConfirm: true })}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '-1px' }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Delete
+          </button>
         </div>
       </div>
     );
@@ -700,36 +1398,65 @@ export default function App() {
   };
 
   const renderNotificationsSlideover = () => {
+    const notificationsList = [];
+    contacts.forEach(c => {
+      if (c.reminder_at) {
+        const reminderDate = new Date(c.reminder_at);
+        const isOverdue = reminderDate < new Date();
+        notificationsList.push({
+          id: `reminder-${c.id}`,
+          text: isOverdue 
+            ? `Follow-up due for ${c.name} (${c.company || 'Client'})` 
+            : `Follow-up scheduled for ${c.name} (${c.company || 'Client'})`,
+          date: isOverdue ? 'Overdue' : reminderDate.toLocaleString(),
+          isMint: isOverdue,
+          contactName: c.name
+        });
+      }
+      if (c.stage === 'Replied' || c.stage === 'Replied / Booked') {
+        notificationsList.push({
+          id: `replied-${c.id}`,
+          text: `${c.name} replied or booked. Check inbox!`,
+          date: 'Recent',
+          isMint: true,
+          contactName: c.name
+        });
+      }
+    });
+
+    notificationsList.sort((a, b) => {
+      if (a.isMint && !b.isMint) return -1;
+      if (!a.isMint && b.isMint) return 1;
+      return 0;
+    });
+
+    const handleNotificationClick = (contactName) => {
+      setSlideover({ show: false, type: null, data: null });
+      handleOpenContact(contactName);
+    };
+
     return (
       <div>
         <div className="timeline">
-          <div className="tl-item mint">
-            <div>
-              <div className="tl-text">Priya Nair replied to your last email</div>
-              <div className="tl-date">2h ago</div>
+          {notificationsList.map((n) => (
+            <div 
+              key={n.id} 
+              className={`tl-item ${n.isMint ? 'mint' : ''}`}
+              style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '2px', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '8px' }}
+              onClick={() => handleNotificationClick(n.contactName)}
+            >
+              <div className="tl-text" style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{n.text}</div>
+              <div className="tl-date" style={{ fontSize: '11px', color: n.isMint ? 'var(--accent)' : 'var(--text-3)' }}>{n.date}</div>
             </div>
-          </div>
-          <div className="tl-item mint">
-            <div>
-              <div className="tl-text">Offer submitted on 31 Harrow St</div>
-              <div className="tl-date">5h ago</div>
+          ))}
+          {notificationsList.length === 0 && (
+            <div style={{ padding: '20px 8px', fontSize: '12.5px', color: 'var(--text-2)', textAlign: 'center' }}>
+              No notifications at this time.
             </div>
-          </div>
-          <div className="tl-item">
-            <div>
-              <div className="tl-text">Inspection scheduled for 221 Maple Grove</div>
-              <div className="tl-date">Yesterday</div>
-            </div>
-          </div>
-          <div className="tl-item">
-            <div>
-              <div className="tl-text">Weekly report is ready</div>
-              <div className="tl-date">2 days ago</div>
-            </div>
-          </div>
+          )}
         </div>
         <div className="btn-row" style={{ marginTop: '1.5rem' }}>
-          <Button variant="outline" onClick={() => addToast('ready', 'All notifications marked read.')}>
+          <Button variant="outline" onClick={() => addToast('ready', 'All notifications caught up.')}>
             Mark all read
           </Button>
         </div>
@@ -760,14 +1487,15 @@ export default function App() {
 
         {/* View content wrap */}
         <div className="right-column">
-          <Topbar
-             currentView={currentView}
+          <Topbar 
+             currentView={currentView} 
              contactNameForFullProfile={activeContactName || (currentView === 'contact-full' ? returnToView : '')}
              searchQuery={searchQuery}
              onSearchQueryChange={setSearchQuery}
              onShowNotifications={() => setSlideover({ show: true, type: 'notification', data: null })}
              onOpenImport={() => setModal({ show: true, type: 'import', data: null })}
              onOpenNewContact={() => setModal({ show: true, type: 'new-contact', data: 'Not Contacted' })}
+             hasNotifications={contacts.some(c => c.reminder_at && new Date(c.reminder_at) < new Date())}
              contactsCount={contacts.length}
           />
 
@@ -873,31 +1601,15 @@ export default function App() {
         title={
           slideover.type === 'notification' ? 'Notifications' :
           slideover.type === 'follow-up' ? `Follow-up · ${slideover.data}` :
-          'Contact Details'
+          ''
         }
         subtitle={
-          slideover.type === 'notification' ? '4 unread' :
+          slideover.type === 'notification' ? `${contacts.filter(c => c.reminder_at && new Date(c.reminder_at) < new Date()).length} due` :
           slideover.type === 'follow-up' ? `Drafted for ${activeContactName || slideover.data}` :
           ''
         }
-        headerActions={
-          slideover.type === 'contact-details' ? (
-            <Button
-              variant="outline"
-              style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem' }}
-              onClick={() => {
-                // Open full profile view
-                setActiveContactName(slideover.data); // preserve before closing
-                handleViewChange('contact-full');
-                setSlideover({ show: false, type: null, data: null });
-              }}
-            >
-              Open full profile →
-            </Button>
-          ) : null
-        }
+        headerActions={null}
       >
-        {slideover.type === 'contact-details' && renderContactDetailsSlideover()}
         {slideover.type === 'follow-up' && renderFollowupSlideover()}
         {slideover.type === 'notification' && renderNotificationsSlideover()}
       </Slideover>
@@ -906,9 +1618,17 @@ export default function App() {
       <Modal
         show={modal.show}
         onClose={() => setModal({ show: false, type: null, data: null })}
-        className={modal.type === 'new-contact' || modal.type === 'edit-contact' ? 'wizard-card-bg' : ''}
-        style={modal.type === 'new-contact' || modal.type === 'edit-contact' ? { width: '480px', padding: '34px 30px 26px', borderRadius: '28px' } : {}}
+        className={modal.type === 'new-contact' || modal.type === 'edit-contact' || modal.type === 'contact-details' ? 'wizard-card-bg' : ''}
+        style={
+          modal.type === 'contact-details' || modal.type === 'edit-contact'
+            ? { width: '580px', padding: '38px 34px 30px', borderRadius: '28px', position: 'relative' }
+            : modal.type === 'new-contact'
+            ? { width: '480px', padding: '34px 30px 26px', borderRadius: '28px' }
+            : {}
+        }
       >
+        {modal.type === 'contact-details' && renderContactDetailsCard()}
+
         {modal.type === 'import' && (
           <ImportWizard
             onClose={() => setModal({ show: false, type: null, data: null })}
@@ -941,6 +1661,7 @@ export default function App() {
             onSave={handleEditContactConfirm}
             onDelete={handleDeleteContactConfirm}
             onCancel={() => setModal({ show: false, type: null, data: null })}
+            startWithDeleteConfirm={modal.startWithDeleteConfirm}
           />
         )}
 
@@ -1078,7 +1799,7 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
       }
       
       const fields = data.data;
-      setName(fields.name || '');
+      setName(fields.name || fields.company || '');
       setCompany(fields.company || '');
       setRole(fields.role || 'Client');
       setIndustry(fields.industry || '');
@@ -1495,7 +2216,7 @@ function NewContactForm({ stage, onCreate, onConfirmImport, onCancel }) {
   );
 }
 
-function EditContactForm({ contact, onSave, onDelete, onCancel }) {
+function EditContactForm({ contact, onSave, onDelete, onCancel, startWithDeleteConfirm = false }) {
   const [name, setName] = useState(contact.name || '');
   const [company, setCompany] = useState(contact.company || '');
   const [role, setRole] = useState(contact.role || '');
@@ -1509,12 +2230,20 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
   const [stage, setStage] = useState(contact.stage || 'New Lead');
   const [rawDump, setRawDump] = useState(contact.raw_dump || '');
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(startWithDeleteConfirm);
 
   const handleSave = async () => {
     if (!name || !company) {
       addToast('attn', 'Name and Company are required.');
       return;
     }
+
+    if (!showConfirm) {
+      setShowConfirm(true);
+      return;
+    }
+
     setLoading(true);
 
     // Update the Source header inside raw_dump
@@ -1541,12 +2270,14 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
         email,
         score: contact.score || 50,
         stage,
-        raw_dump: finalRawDump
+        raw_dump: finalRawDump,
+        social_links: contact.social_links // PRESERVE
       });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setShowConfirm(false);
     }
   };
 
@@ -1579,6 +2310,121 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
     };
     setStage(mapping[val] || val);
   };
+
+  if (showDeleteConfirm) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', color: '#fff', textAlign: 'center', padding: '10px 0' }}>
+        <div className="head-icon-wrap" style={{ alignSelf: 'center', marginBottom: '0.4rem' }}>
+          <div className="head-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 className="wizard-title" style={{ margin: 0, fontSize: '1.4rem' }}>Confirm Deletion</h1>
+        <p className="wizard-subtitle" style={{ color: 'var(--text-2)', lineHeight: 1.5, fontSize: '0.9rem' }}>
+          Are you sure you want to permanently delete <strong>{name}</strong>? This action cannot be undone and will delete all associated outreach drafts, messaging history, and personalized context.
+        </p>
+
+        <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1rem', width: '100%' }}>
+          <button 
+            className="primary-btn" 
+            style={{ flex: 1, padding: '10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await onDelete(contact.id);
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setLoading(false);
+                setShowDeleteConfirm(false);
+              }
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Deleting...' : 'Confirm Delete'}
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              flex: 1, 
+              padding: '10px', 
+              background: 'none', 
+              border: '1px solid var(--border)', 
+              color: 'var(--text-1)', 
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem'
+            }}
+            onClick={() => {
+              setShowDeleteConfirm(false);
+              if (startWithDeleteConfirm) {
+                onCancel();
+              }
+            }}
+            disabled={loading}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showConfirm) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', color: '#fff', textAlign: 'center', padding: '10px 0' }}>
+        <div className="head-icon-wrap" style={{ alignSelf: 'center', marginBottom: '0.4rem' }}>
+          <div className="head-icon" style={{ background: 'rgba(226, 88, 94, 0.1)', color: '#ef4444' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 className="wizard-title" style={{ margin: 0, fontSize: '1.4rem' }}>Confirm Changes</h1>
+        <p className="wizard-subtitle" style={{ color: 'var(--text-2)', lineHeight: 1.5, fontSize: '0.9rem' }}>
+          Saving these changes will modify the contact record. If the background context, role, or company details are changed, it will directly affect the personalized outreach and follow-up messaging for this contact.
+        </p>
+
+        <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1rem', width: '100%' }}>
+          <button 
+            className="primary-btn" 
+            style={{ flex: 1, padding: '10px', background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Confirm Save'}
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              flex: 1, 
+              padding: '10px', 
+              background: 'none', 
+              border: '1px solid var(--border)', 
+              color: 'var(--text-1)', 
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem'
+            }}
+            onClick={() => setShowConfirm(false)}
+            disabled={loading}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1640,7 +2486,16 @@ function EditContactForm({ contact, onSave, onDelete, onCancel }) {
       </div>
 
       <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: '1.2rem' }}>
-        <Button variant="outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => onDelete(contact.id)}>
+        <Button 
+          variant="outline" 
+          style={{ borderColor: '#ef4444', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }} 
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '-1px' }}>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
           Delete Contact
         </Button>
         <div style={{ display: 'flex', gap: '0.6rem' }}>

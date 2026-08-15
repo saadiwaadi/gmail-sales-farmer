@@ -31,16 +31,22 @@ export default function SegmentsRail({
               <span>All stages</span>
             </button>
             <button
-              className={`nav-item segment-item ${activeSegment === 'my-deals' ? 'active' : ''}`}
-              onClick={() => onSegmentChange('my-deals')}
+              className={`nav-item segment-item ${activeSegment === 'contacted' ? 'active' : ''}`}
+              onClick={() => onSegmentChange('contacted')}
             >
-              <span>My deals</span>
+              <span>Contacted</span>
             </button>
             <button
-              className={`nav-item segment-item ${activeSegment === 'stalled' ? 'active' : ''}`}
-              onClick={() => onSegmentChange('stalled')}
+              className={`nav-item segment-item ${activeSegment === 'not-contacted' ? 'active' : ''}`}
+              onClick={() => onSegmentChange('not-contacted')}
             >
-              <span>Stalled</span>
+              <span>Not contacted</span>
+            </button>
+            <button
+              className={`nav-item segment-item ${activeSegment === 'follow-up' ? 'active' : ''}`}
+              onClick={() => onSegmentChange('follow-up')}
+            >
+              <span>Follow up</span>
             </button>
           </>
         ) : (

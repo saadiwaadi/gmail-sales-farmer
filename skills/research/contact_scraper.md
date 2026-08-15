@@ -1,4 +1,4 @@
-EXTRACTION MODE — STRICT RULES:
+EXTRACTION MODE - STRICT RULES:
 This is a data extraction task only. You are NOT writing outreach or any message.
 You are reading raw input and returning a JSON object. Nothing else.
 Empty string "" is the correct value for any field not explicitly present in the source text.
@@ -125,7 +125,7 @@ A Google Maps dump may contain only a business name, reviews, and a phone number
 
 Output ONLY a valid JSON object. No preamble, no markdown fences, no explanation before or after. The JSON must match this schema exactly:
 
-{
+{{
   "name": "",
   "company": "Al Majd Dental Clinic",
   "role": "",
@@ -134,4 +134,4 @@ Output ONLY a valid JSON object. No preamble, no markdown fences, no explanation
   "phone": "",
   "source": "Google Maps",
   "notes": "Business overview: A dental clinic in Muscat offering general and specialist dental care including extractions, root canals, fillings, and cleaning.\nMain offerings: Tooth extraction, root canal treatment, dental filling, teeth cleaning, wisdom tooth removal, braces\nPeople/team structure: Dr. Salu is the primary dentist. One nurse/assistant mentioned by name. Receptionist noted in one review.\nCustomer/client journey: Patients arrive via referral or walk-in, receive a pre-procedure explanation, treatment is completed in-visit, occasional post-treatment follow-up noted.\nRepeated themes: Word-of-mouth referrals, clear procedure explanation, affordable pricing, pain-free treatment\nRelevant operational signals: No online booking system mentioned. Heavy walk-in and referral traffic. Pricing competitiveness mentioned repeatedly relative to other Muscat clinics.\nStrongest personalization angle: Clinic runs almost entirely on referrals with no visible booking or patient retention system — significant gap for an appointment or recall tool.\nPossible software/service connection: Appointment booking, patient recall automation, or referral tracking CRM\nConfidence level: High\nThings to avoid: Assuming Dr. Salu is the owner. No negative operational signals in the data — do not invent problems."
-}
+}}

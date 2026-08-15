@@ -20,7 +20,8 @@ export default function Topbar({
   onShowNotifications,
   onOpenImport,
   onOpenNewContact,
-  contactsCount = 0
+  contactsCount = 0,
+  hasNotifications = false
 }) {
   let [title, sub] = TITLES[currentView] || ["Dashboard", ""];
 
@@ -48,7 +49,7 @@ export default function Topbar({
             onChange={(e) => onSearchQueryChange(e.target.value)}
           />
         </div>
-        <IconButton id="bellBtn" ping={true} onClick={onShowNotifications} title="Notifications">
+        <IconButton id="bellBtn" ping={hasNotifications} onClick={onShowNotifications} title="Notifications">
           <BellIcon />
         </IconButton>
         <Button variant="outline" id="importLeadsBtn" onClick={onOpenImport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

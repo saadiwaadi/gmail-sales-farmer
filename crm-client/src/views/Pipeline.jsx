@@ -15,6 +15,38 @@ export default function Pipeline({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
+  const parseContactedDate = (lastStr) => {
+    if (!lastStr) return null;
+    const lower = lastStr.toLowerCase().trim();
+    if (lower === 'today') {
+      return new Date();
+    }
+    if (lower === 'yesterday') {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d;
+    }
+    const daysAgoMatch = lastStr.match(/(\d+)\s+days?\s+ago/i);
+    if (daysAgoMatch) {
+      const d = new Date();
+      d.setDate(d.getDate() - parseInt(daysAgoMatch[1], 10));
+      return d;
+    }
+    const weeksAgoMatch = lastStr.match(/(\d+)\s+weeks?\s+ago/i);
+    if (weeksAgoMatch) {
+      const d = new Date();
+      d.setDate(d.getDate() - parseInt(weeksAgoMatch[1], 10) * 7);
+      return d;
+    }
+    if (lower === '1 week ago') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      return d;
+    }
+    const parsed = new Date(lastStr);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   const getAllFilteredDeals = () => {
     // Combine all deals from all stages in kanbanData
     const allDeals = Object.keys(kanbanData).reduce((acc, stage) => {
@@ -30,19 +62,37 @@ export default function Pipeline({
       
       const contact = contactsList.find(c => c.name === deal.name);
       if (!contact) {
-        return activeSegment === 'stalled' ? false : true;
+        return activeSegment === 'not-contacted';
       }
       
-      if (activeSegment === 'stalled') {
-        return contact.score < 50;
+      const stage = contact.stage || deal.stage || '';
+      
+      if (activeSegment === 'contacted') {
+        return stage === 'Sent' || stage === 'Replied' || stage === 'Replied / Booked';
       }
 
-      if (activeSegment === 'my-deals') {
-        return contact.score >= 70;
+      if (activeSegment === 'not-contacted') {
+        return stage === 'Not Contacted' || stage === 'Research Done' || stage === 'Drafted' || !stage;
       }
 
-      if (activeSegment === 'replied') {
-        return contact.messages && contact.messages.some(m => m.outcome === 'replied');
+      if (activeSegment === 'follow-up') {
+        const hasReminder = !!contact.reminder_at;
+        if (hasReminder) return true;
+
+        if (stage === 'Sent' || stage === 'Offer') {
+          const autoFollowSetting = localStorage.getItem('auto_follow') !== 'false';
+          if (!autoFollowSetting) return false;
+
+          const followupDaysSetting = parseInt(localStorage.getItem('followup_days'), 10) || 7;
+          const lastDate = parseContactedDate(contact.last);
+          if (!lastDate) return false;
+
+          const diffTime = Math.abs(new Date() - lastDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays >= followupDaysSetting;
+        }
+
+        return false;
       }
       
       return contact.type === activeSegment;

@@ -26,21 +26,15 @@ def run_profile_scrape(file_path):
         
         # Load skill and build prompt
         scraper_skill = load_skill("research/contact_scraper.md", raw_dump=raw_dump)
-        scraper_prompt = f"RAW PROFILE TEXT:\n{raw_dump}"
-        
-        # Write debug prompt file
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        debug_prompt_path = os.path.join(project_dir, "debug_prompt.txt")
-        with open(debug_prompt_path, "w", encoding="utf-8") as df:
-            df.write(f"SYSTEM PROMPT:\n{scraper_skill}\n\n========================================\n\nPROMPT:\n{scraper_prompt}")
         
         response_text = provider.generate(
-            prompt=scraper_prompt,
+            prompt=f"RAW PROFILE TEXT:\n{raw_dump}",
             json_mode=True,
             system_prompt=scraper_skill
         )
         
         # Write debug response file
+        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         debug_response_path = os.path.join(project_dir, "debug_response.txt")
         with open(debug_response_path, "w", encoding="utf-8") as df:
             df.write(response_text)
