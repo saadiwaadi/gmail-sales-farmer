@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
+const path = require('path');
 const child = spawn('node', ['--experimental-sqlite', 'server.js'], {
-  cwd: 'd:\\Vs arsenal\\Sales Crm for bitlogic\\bitlogic-server',
+  cwd: path.join(__dirname, 'server'),
   stdio: 'inherit',
   env: process.env
 });

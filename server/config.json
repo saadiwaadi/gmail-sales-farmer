@@ -1,0 +1,7 @@
+{
+  "port": 4000,
+  "backupDir": "./backups",
+  "backupIntervalHours": 2,
+  "backupMode": "rolling",
+  "instanceId": "cb3159dc-6a38-4e89-bdc1-4043b2f84570"
+}

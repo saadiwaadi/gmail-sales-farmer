@@ -1,0 +1,7 @@
+.env
+node_modules/
+backups/
+*.db
+*.db-shm
+*.db-wal
+peers.json

@@ -1,0 +1,19 @@
+{
+  "name": "bitlogic-server",
+  "version": "1.0.0",
+  "description": "Sales CRM backend server for Bitlogic Hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server.js",
+    "download-fonts": "node download-fonts.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bonjour-service": "^1.2.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "node-cron": "^3.0.3",
+    "uuid": "^10.0.0"
+  }
+}
